@@ -21,6 +21,18 @@ $ man scp
 
 
 
+###### 将win10中的文件，上传到linux系统
+
+```bash
+# Dos中的sftp命令
+# 在dos窗口中输入：
+sftp cent@10.xx.xx.43 根据提示输入用户的密码
+# 在sftp中输入： 
+put hadoop-2.8.5.tar.gz /home/cent/Downloads/
+```
+
+
+
 ### 压缩与解压
 
 ###### unzip
