@@ -126,4 +126,7 @@ $ tar -tf t.tar
 ## docker命令
 
 
+#### linux只列出目录
+ls -d */
+
 
