@@ -123,10 +123,42 @@ $ tar -tf t.tar
 
 
 
-## docker命令
+## LINUX杂项
 
 
-#### linux只列出目录
+##### linux只列出目录
+```
 ls -d */
+```
 
+
+
+##### linux配置端口转发：
+
+在Linux的下面部署了tomcat，为了安全我们使用非root用户进行启动，但是在域名绑定时无法直接访问80端口号。众所周知，在unix下，非root用户不能监听1024以上的端口号，这个tomcat服务器就没办法绑定在80端口下。所以这里需要使用linux的端口转发机制，把到80端口的服务请求都转到8080端口上。
+
+在root账户下面运行一下命令：
+
+```
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080
+```
+
+注意：网上朋友的命令dport 前面都是 一个 -，通常都会报错。另外如果防火墙重新启动，该命令就会失效。
+
+可以使用下面的命令把该规则保存到iptables里面 ：
+
+```
+service iptables save
+```
+
+
+
+##### 端口映射：
+
+pgw_ip:205.55.128.108 
+
+```
+iptables -t nat -A PREROUTING -p tcp --dport 31942 -j DNAT --to 205.55.128.108:31943
+iptables -t nat -A POSTROUTING -p tcp -d 205.55.128.108 --dport 31943 -j SNAT --to 205.55.128.236:31942
+```
 
