@@ -168,3 +168,14 @@ iptables -t nat -A POSTROUTING -p tcp -d 205.55.128.108 --dport 31943 -j SNAT --
 lsmod 查看内核模块
 ```
 
+
+
+显示发行信息： http://ipcmen.com/lsb_release
+
+```bash
+lsb_release
+
+lsb_release -c -s
+=====
+xenial
+```

@@ -258,7 +258,6 @@ Description: Library for managing RDMA connections
  # This package contains the shared library. #dz 没有包含头文件
 Homepage: https://github.com/linux-rdma/rdma-core
 Original-Maintainer: Benjamin Drung <benjamin.drung@cloud.ionos.com>
-
 ```
 
 
@@ -288,17 +287,13 @@ apt install python3-dev cython3 python3-docutils pandoc
 apt install pkg-config
 ```
 
-上面的其他的都能安装，但是pkg-config一致失败，后面把这个单独安装就可以了
+上面的其他的都能安装，但是pkg-config一直失败，后面把这个单独安装就可以了
 
-#### [pkg-config原理及用法](https://www.cnblogs.com/sddai/p/10266624.html)
-
-
+#### 
 
 ```
 export PYTHONPATH=$PYTHONPATH:"/home/rdmacore/rdma-core-master/build/python"
 ```
-
-
 
 
 
@@ -317,8 +312,6 @@ export PYTHONPATH=$PYTHONPATH:"/home/rdmacore/rdma-core-master/build/python"
 # client端 192.168.56.101
 ./rdma_test.py -d rocep0s8 -o write -n 5 192.168.56.102
 ```
-
-
 
 
 
