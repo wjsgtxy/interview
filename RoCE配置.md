@@ -497,3 +497,80 @@ root@xyvm2:/home/rdmacore/rdma-core-master/libibverbs/examples#  ld rc.o pingpon
 gcc rc.o pingpong.o -lrt -L/home/rdmacore/rdma-core-master/build/lib/ -lrdmacm -libverbs -o ibv_rc_pp
 ```
 
+
+
+### RDMA
+
+##### ibv_rc_pingpong
+
+直接执行程序是 /usr/bin目录下的ibv_rc_pingpong
+
+```bash
+# 101上面启动服务端
+ibv_rc_pingpong
+# 102上面启动客户端
+ibv_rc_pingpong 192.168.56.101
+```
+
+运行这个程序，client提示:
+
+> client read/write: Protocol not supported
+> Couldn't read/write remote address
+
+server提示：
+
+> Failed to modify QP to RTR
+> Couldn't connect to remote QP
+
+这个是在调用ibv_modify_qp 后报的错，我记得错误号是 22，perror翻译这个错误号，就是上面的 ’Protocol not supported‘
+
+百度，发现这程序有些bug：https://docs.oracle.com/cd/E56344_01/html/E54075/ibv-rc-pingpong-1.html
+
+> The  network  synchronization  between  client  and   server instances is weak, and does not prevent incompatible options from being used on the two instances.  The method  used  for retrieving  work  completions  is  not strictly correct, and race conditions may cause failures on some systems.
+
+
+
+后面看了知乎的文章：https://zhuanlan.zhihu.com/p/476407641
+
+发现添加了一个 -g 指定 gid的参数，就可以成功了！！！
+
+```bash
+# 101上面启动服务端
+ibv_rc_pingpong -g 1
+# 102上面启动客户端
+ibv_rc_pingpong -g 1 192.168.56.101
+```
+
+**ibv_devinfo最下面port1有两个gid, 试了下用gid 0不行，只能用gid 1才可以**
+
+
+
+##### ibv_ud_pingpong
+
+```bash
+# serve
+ibv_ud_pingpong
+# client
+ibv_ud_pingpong 192.168.56.101
+```
+
+server提示：
+
+> Failed to create AH
+> Couldn't connect to remote QP
+
+
+
+##### rdma_client/rdma_server
+
+```bash
+# server
+rdma_server -p 1993
+# client
+rdma_client -s 192.168.56.101 -p 1993
+```
+
+这个程序好像成功了，没有报错
+
+> rdma_server: start
+> rdma_server: end 0

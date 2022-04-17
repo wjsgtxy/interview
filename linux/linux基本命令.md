@@ -162,3 +162,9 @@ iptables -t nat -A PREROUTING -p tcp --dport 31942 -j DNAT --to 205.55.128.108:3
 iptables -t nat -A POSTROUTING -p tcp -d 205.55.128.108 --dport 31943 -j SNAT --to 205.55.128.236:31942
 ```
 
+
+
+```
+lsmod 查看内核模块
+```
+
