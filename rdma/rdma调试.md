@@ -1,8 +1,8 @@
-# RDMA实验笔记
+# RDMA学习笔记
 
 
 
-## 配置环境
+## 基本配置
 
 配置RXE网卡
 
@@ -10,11 +10,9 @@
 sudo rdma link add rxe_0 type rxe netdev enp0s8
 ```
 
-实际上面生成的网卡名称不叫rxe_0，而是叫rocep0s8，p0s8是网卡名称后4位。不知道为什么自己的命名没有生效。
+实际上面生成的网卡名称不叫rxe_0，而是叫rocep0s8，p0s8是网卡名称后4位。不知道为什么没有使用自定义的名称。
 
-
-
-###### 网卡信息
+###### 查看设备网卡
 
 ```bash
 root@xyvm2:/usr# ifconfig enp0s8
@@ -57,12 +55,17 @@ hca_id: rocep0s8
                         port_lid:               0
                         port_lmc:               0x00
                         link_layer:             Ethernet
-# 输入ibv_devinfo -v 还可以查看更详细的信息                        
+
+# 查看更详细的port和gid信息
+root@xyvm2:/usr# ibv_devinfo -v
+port1: ...
+    GID[  0]:               fe80:0000:0000:0000:0a00:27ff:feef:70a8 # gid[0] 是mac地址生成的
+    GID[  1]:               0000:0000:0000:0000:0000:ffff:c0a8:3865 # gid[1] 是ipv4生成的的
+# gid[2] 是ipv6生成的，因为我禁用了ipv6，所以我只有GID[0]和GID[1]，没有GID[2]
+# 我的ip是192.168.56.101， 192->0xc0, 168->0xa8, 101->0x65, 56->0x38，对应GID[1]的最后32bit c0a8:3865
 ```
 
-
-
-perftest测试：
+###### perftest测试
 
 ```bash
 # 101机器上
@@ -75,7 +78,7 @@ ib_send_bw -d rocep0s8 192.168.56.101
 
 
 
-
+## 相关软件包安装
 
 | 软件包名          | 主要功能                           |
 | ----------------- | ---------------------------------- |
@@ -305,7 +308,7 @@ apt install pkg-config
 
 上面的其他的都能安装，但是pkg-config一直失败，后面把这个单独安装就可以了
 
-#### 
+
 
 ```
 export PYTHONPATH=$PYTHONPATH:"/home/rdmacore/rdma-core-master/build/python"
@@ -583,3 +586,211 @@ rdma_client -s 192.168.56.101 -p 1993
 
 > rdma_server: start
 > rdma_server: end 0
+
+
+
+
+
+clion远程调试(https://blog.csdn.net/lihao21/article/details/87425187)
+
+安装gdbserver:
+
+```
+apt install gdbserver
+```
+
+
+
+clion Tools->deployment添加远程路径（127.0.0.1:3333）
+
+后面服务器gdbserver启动程序：
+
+```bash
+gdbserver :1234 ./client -a 192.168.56.101
+gdbserver :1234 ./client -a 192.168.56.101 -p 12001 -c 2000 -t -x
+```
+
+clion中Run->configuration 添加一个Remote Debug, path mapping也添加上本地和服务器对照的路径
+
+```
+target remote args 为 tcp:127.0.0.1:1234
+```
+
+注意，需要在virtual box 中 配置 102虚拟机nat 网卡的端口映射 1234:1234，就像之前映射3333端口让moba访问一样
+
+
+
+```bash
+# 查看rdma link帮助文档，写的很详细q
+man rdma link 
+```
+
+
+
+### 执行perftest测试
+
+```bash
+# server 
+ib_send_bw -d rocep0s8
+
+# client
+ib_send_bw -d rocep0s8 192.168.56.102
+```
+
+
+
+
+
+```bash
+# 安装rping等工具，这些工具是在 rdmacore项目中 librdmacm/examples中编写的
+apt install rdmacm-utils
+```
+
+
+
+rdma：
+
+https://docs.nvidia.com/networking/display/rdmacore50/RoCE+Time-Stamping
+
+> RoCE Time-Stamping allows you to stamp packets when they are sent to the wire or when they are received from the wire. The time stamp is given in raw hardware cycles, but can easily be converted into hardware-referenced nanoseconds-based-time. Additionally, it enables you to query the hardware for the hardware time, thus stamp other application’s event and compare time.
+
+rdma时间戳功能允许标记一个packet的硬件cycle，可以方便的把这个cycle转换成nano表示的时间。
+
+
+
+https://man7.org/linux/man-pages/man3/ibv_query_device_ex.3.html
+
+设备能力：
+
+```
+struct ibv_device_attr_ex {
+struct ibv_device_attr orig_attr;
+uint32_t               comp_mask;                  /* Compatibility mask that defines which of the following variables are valid */
+struct ibv_odp_caps    odp_caps;                   /* On-Demand Paging capabilities */
+uint64_t               completion_timestamp_mask;  /* Completion timestamp mask (0 = unsupported) */
+uint64_t               hca_core_clock;             /* The frequency (in kHZ) of the HCA (0 = unsupported) */
+uint64_t               device_cap_flags_ex;        /* Extended device capability flags */
+struct ibv_tso_caps    tso_caps;                   /* TCP segmentation offload capabilities */
+struct ibv_rss_caps    rss_caps;                   /* RSS capabilities */
+uint32_t               max_wq_type_rq;             /* Max Work Queue from type RQ */
+struct ibv_packet_pacing_caps packet_pacing_caps; /* Packet pacing capabilities */
+uint32_t               raw_packet_caps;            /* Raw packet capabilities, use enum ibv_raw_packet_caps */
+struct ibv_tm_caps     tm_caps;                    /* Tag matching capabilities */
+struct ibv_cq_moderation_caps  cq_mod_caps;        /* CQ moderation max capabilities */
+uint64_t              max_dm_size;         /* Max Device Memory size (in bytes)   vailable for allocation */
+struct ibv_pci_atomic_caps atomic_caps;            /* PCI atomic operations capabilities, use enum ibv_pci_atomic_op_size */
+uint32_t               xrc_odp_caps;               /* Mask with enum ibv_odp_transport_cap_bits to know which operations are supported. */
+uint32_t         phys_port_cnt_ex          /* Extended number of physical port count, allows to expose more than 255 ports device */
+};
+```
+
+
+
+
+
+gdb调试rdma_client 
+
+```
+scp ./rdma_client root@192.168.56.101:/home/rdma/rdma_examples
+scp ./rdma_server root@192.168.56.101:/home/rdma/rdma_examples
+
+# 101 server
+/home/rdma/rdma_examples/rdma_server
+
+
+# 102 client
+./rdma_client -s 192.168.56.101
+gdbserver :1234 ./rdma_client -s 192.168.56.101
+
+gdbserver :1234 ./rdma_server
+
+```
+
+gdb调试rdma_server
+
+```
+# 101 client
+/home/rdma/rdma_examples/rdma_client -s 192.168.56.102
+
+# 102 server
+gdbserver :1234 ./rdma_server
+```
+
+先运行server，不运行client，发现server 端阻塞在了 rdma_get_request这里等待连接，clion就定在这里了，什么都不显示了，直到运行client
+
+
+
+调试rping
+
+```
+scp ./rping root@192.168.56.101:/home/rdma/rdma_examples
+
+# 101
+./rping -s -vVd -C 2
+
+# 102
+./rping -c -C 2 -vVd -a 192.168.56.101
+```
+
+
+
+rping client 处理的event，client就这3个event
+
+```
+RDMA_CM_EVENT_ADDR_RESOLVED
+RDMA_CM_EVENT_ROUTE_RESOLVED
+RDMA_CM_EVENT_ESTABLISHED
+```
+
+
+
+server端event
+
+```
+RDMA_CM_EVENT_CONNECT_REQUEST
+RDMA_CM_EVENT_ESTABLISHED
+RDMA_CM_EVENT_DISCONNECTED
+```
+
+
+
+
+
+```
+# gcc 那个TODO 这样就可以了，也不用指定-L,但是lrt和rdmacm要放在后面才行，而且要加上ibverbs
+gcc client.o utilities.o -lrt -lrdmacm -libverbs  -o client
+
+```
+
+
+
+```
+scp ./rdma_rc  root@192.168.56.101:/home/rdma/examples
+```
+
+
+
+```bash
+# client 注意gdbserve和：中间有个空格！
+gdbserver :1234 ./rdma_rc -g 1 192.168.56.101
+gdbserver :1234 ./rc_pingpong -g 1 192.168.56.101
+# server
+/home/rdma/examples/rdma_rc -g 1
+```
+
+
+
+```bash
+# 查看section header信息， 没有-g编译的，没有输出
+readelf -S file
+# 查看是否有debug信息，有-g编译的，才有debug输出
+readelf -S filename | grep debug 
+=============================
+  [28] .debug_aranges    PROGBITS         0000000000000000  0000928b
+  [29] .debug_info       PROGBITS         0000000000000000  000092eb
+  [30] .debug_abbrev     PROGBITS         0000000000000000  0001298d
+  [31] .debug_line       PROGBITS         0000000000000000  0001320f
+  [32] .debug_str        PROGBITS         0000000000000000  00014786
+  [33] .debug_ranges     PROGBITS         0000000000000000  00018f49
+```
+

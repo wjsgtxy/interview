@@ -1,4 +1,4 @@
-#### ubuntu下配置全局代理
+#### Ubuntu下配置全局代理
 
 打开/etc/profile文件，在末尾加上这三行(password中`.`号不用转义可以直接使用)
 
@@ -10,15 +10,9 @@ export ftp_proxy=http://proxy_ip:port  #代表ftp代理
 
 然后执行source /etc/profile 即可。
 
-测试：
-
-```
+```bash
+# 测试：
 curl www.google.com
-```
-
- 或者:
-
-```
 wget www.google.com
 ```
 
@@ -28,8 +22,8 @@ wget www.google.com
 
 #### backports是什么
 
-百度百科：Backport是将一个软件的*补丁*应用到比此补丁所对应的版本*更老的版本*的**行为**。
-这里不是说某个软件，而是这个行为本身叫做Backport(一般的应用软件，代码本身并不依赖特定版本的系统)
+> 百度百科：Backport是将一个软件的*补丁*应用到比此补丁所对应的版本*更老的版本*的**行为**。
+> 这里不是说某个软件，而是这个行为本身叫做Backport(一般的应用软件，代码本身并不依赖特定版本的系统)
 
 比方说 16.10推出后，已经在16.10中运行的软件，会被backports到16.04中，甚至是14.04中。
 那么，一般情况下，会有哪些软件会被backports到以前版本呢？
@@ -74,11 +68,39 @@ https://keyserver.ubuntu.com/
 
 
 
-#### ubuntu开启x11-forwarding
+#### Ubuntu开启x11-forwarding
 
-https://blog.csdn.net/weixin_41668084/article/details/113361765
+https://www.fujieace.com/linux/ssh-x11-forwarding.html
 
-##### 安装x11
+
+
+###### 一、什么是X11-forwarding？
+
+X11 中的 X 指的就是 X 协议；11 指的是采用 X 协议的第 11 个版本。
+
+X11-forwarding 说的简单明白点就是：可以通过一个支持 X Server 的 SSH 客户端，例如：MobaXterm。 连接到远程 Linux 服务器，可以在本地通过 MobaXterm 运行操作一个远程 Linux 服务器上有图形界面或命令行的程序。
+
+
+
+###### 二、X协议原理
+
+通常来说，Linux 本身是没有图形化界面的，所谓的图形化界面系统只不过中 Linux 下的应用程序。这一点和 Windows 不一样。
+
+Windows 从 Windows 95 开始，图形界面就直接在系统内核中实现了，是操作系统不可或缺的一部分。Linux 的图形化界面，底层都是基于 X 协议。
+
+X 协议由 **X server** 和 **X client** 组成：
+
+X server 管理主机上与显示相关的硬件设置（如显卡、硬盘、鼠标等），它负责屏幕画面的绘制与显示，以及将输入设置（如键盘、鼠标）的动作告知 X client。
+
+X client (即 X 应用程序) 则主要负责事件的处理（即程序的逻辑）。
+
+举个例子：
+
+如果用户点击了鼠标左键，因为鼠标归 X server 管理，于是 X server 就捕捉到了鼠标点击这个动作，然后它将这个动作告诉 X client，因为 X client 负责程序逻辑，于是 X client 就根据程序预先设定的逻辑（例如，画一个圆），告诉 X server 说：“请在鼠标点击的位置，画一个圆”。最后，X server 就响应 X client 的请求，在鼠标点击的位置，绘制并显示出一个圆。
+
+
+
+###### 三、使Linux支持X11-Forwarding
 
 ```bash
 # 安装x11支持 
@@ -89,12 +111,37 @@ sudo apt-get install libx11-dev libxext-dev libxtst-dev libxrender-dev libxmu-de
 # 安装x11-apps
 apt install x11-apps
 
-# 运行xclock
+# 测试：运行xclock
 xclock （显示时钟）
 xclock -d (显示数字)
 
-# 安装并运行firefox
+# 测试：安装并运行firefox，这样就可以本地打开图形化界面了
 apt install firefox
 firefox
 ```
 
+
+
+#### Ubuntu设置时间
+
+```bash
+# 查看时区相关信息
+timedatectl
+# 查看时区列表
+timedatectl 
+# 设置时区，之后date输出的，就显示中国时区了，从UTC 更改为 CST（中国标准时间）
+timedatectl set-timezone Asia/Shanghai
+# 图形化设置时区
+dpkg-reconfigure tzdata
+# 启动时间同步
+timedatectl set-ntp true
+# 将date输出改为24小时格式 添加一行LC_TIME
+vi /etc/default/locale
+LC_TIME=en_DK.UTF-8
+```
+
+
+
+#### Ubuntu systemctl
+
+https://blog.csdn.net/skh2015java/article/details/94012643

@@ -68,7 +68,7 @@ void teseOperation(){
     char* cstr = new char[str.length() + 1]; // 加一个用来放 \0
     strcpy(cstr, str.c_str());
 
-    char* p  = strtok(cstr, " "); // todo
+    char* p  = strtok(cstr, " "); // 按照空格分解字符串，默认的模板就是下面这种 https://www.runoob.com/cprogramming/c-function-strtok.html
     while(p != 0){
         cout << p << endl;
         p = strtok(NULL, " ");

@@ -744,6 +744,63 @@ GNU文档，值得一看： https://www.gnu.org/software/libc/manual/html_node/
 
 
 
+https://gcc.gnu.org/onlinedocs/gcc-5.5.0/gcc/Code-Gen-Options.html#Code-Gen-Options
+
+-fpic
+Generate position-independent code (PIC) suitable for use in a shared library, if supported for the target machine. Such code accesses all constant addresses through a global offset table (**GOT**). The dynamic loader resolves the GOT entries when the program starts (the dynamic loader is not part of GCC; it is part of the operating system). If the GOT size for the linked executable exceeds a machine-specific maximum size, you get an error message from the linker indicating that -fpic does not work; in that case, recompile with -fPIC instead. (These maximums are 8k on the SPARC and 32k on the m68k and RS/6000. The x86 has no such limit.)
+
+Position-independent code requires special support, and therefore works only on certain machines. For the x86, GCC supports PIC for System V but not for the Sun 386i. Code generated for the IBM RS/6000 is always position-independent.
+
+When this flag is set, the macros __pic__ and __PIC__ are defined to 1.
+
+-fPIC
+If supported for the target machine, emit position-independent code, suitable for dynamic linking and avoiding any limit on the size of the global offset table. This option makes a difference on the m68k, PowerPC and SPARC.
+
+Position-independent code requires special support, and therefore works only on certain machines.
+
+When this flag is set, the macros __pic__ and __PIC__ are defined to 2.
+
+-fpie
+-fPIE
+These options are similar to -fpic and -fPIC, but generated position independent code **can be only linked into executables.** Usually these options are used when -pie GCC option is used during linking.
+
+-fpie and -fPIE both define the macros __pie__ and __PIE__. The macros have the value 1 for -fpie and 2 for -fPIE.
+
+
+
+
+
+CC 与 CXX 这是 C 与 C++ 编译器命令。默认值一般是 “gcc” 与 “g++”。 CFLAGS 与 CXXFLAGS CFLAGS 表示用于 C 编译器的选项，CXXFLAGS 表示用于 C++ 编译器的选项。这两个变量实际上涵盖了编译和汇编两个步骤。大多数程序和库在编译时默认的优化级别是”2″(使用”-O2″选项)并且带有调试符号来编 译，也就是 CFLAGS=”-O2 -g”, CXXFLAGS=$CFLAGS 。事实上，”-O2″已经启用绝大多数安全的优化选项了。
+
+## GCC编译选项CFLAGS参数
+
+| 选项  | 说明                                                         |
+| ----- | ------------------------------------------------------------ |
+| -c    | 用于把源码文件编译成 .o 对象文件,不进行链接过程              |
+| -o    | 用于连接生成可执行文件，在其后可以指定输出文件的名称         |
+| -g    | 用于在生成的目标可执行文件中，添加调试信息，可以使用GDB进行调试 |
+| -Idir | 用于把新目录添加到include路径上，可以使用相对和绝对路径，“-I.”、“-I./include”、“-I/opt/include” |
+| -Wall | 生成常见的所有告警信息，且停止编译，具体是哪些告警信息，请参见GCC手册，一般用这个足矣！ |
+| -w    | 关闭所有告警信息                                             |
+| -O    | 表示编译优化选项，其后可跟优化等级0\1\2\3，默认是0，不优化   |
+| -fPIC | 用于生成位置无关的代码                                       |
+| -v    | (在标准错误)显示执行编译阶段的命令，同时显示编译器驱动程序,预处理器,编译器的版本号 |
+
+## GCC链接选项LDFLAGS参数
+
+| 选项       | 说明                                                         |
+| ---------- | ------------------------------------------------------------ |
+| -llibrary  | 链接时在标准搜索目录中寻找库文件，搜索名为`liblibrary.a` 或 `liblibrary.so` |
+| -Ldir      | 用于把新目录添加到库搜索路径上，可以使用相对和绝对路径，“-L.”、“-L./include”、“-L/opt/include” |
+| -Wl,option | 把选项 option 传递给连接器，如果 option 中含有逗号,就在逗号处分割成多个选项 |
+| -static    | 使用静态库链接生成目标文件，避免使用共享库，生成目标文件会比使用动态链接库大 |
+
+## LIBS
+
+LDFLAGS是选项，LIBS是要链接的库。LDFLAGS告诉链接器从哪里寻找库文件，LIBS告诉链接器要链接哪些库文件。
+
+
+
 ------
 
 ## **GCC参数详解**
