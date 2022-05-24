@@ -41,6 +41,23 @@ https://packages.ubuntu.com/search?keywords=postgresql&searchon=names&suite=bion
 
 
 
+安装postgrelsql
+
+https://linux.cn/article-11480-1.html
+
+安装默认版本，1804的是pgsql10
+
+```
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+```
+
+
+
+如果想安装最新版，需要
+
+
+
 ```bash
 # pgsql 的一些包
 apt install libpqxx-6.4
@@ -179,23 +196,88 @@ apt install libprotobuf-dev
 -- Found Protobuf: /usr/lib/x86_64-linux-gnu/libprotobuf.so;-lpthread (found version "3.0.0")
 ```
 
+上面这个只是安装了库，还需要安装proto的compiler
+
+```bash
+apt  install protobuf-compiler
+```
+
 
 
 find_package(**Log4CXX** REQUIRED)
+
+```bash
+sudo apt install liblog4cxx-dev
+# 找到了
+-- LOG4CXX - /usr/lib/x86_64-linux-gnu/liblog4cxx.so
+```
 
 
 
 find_package(**Doxygen**)
 
+```
+apt install doxygen
+```
+
+
+
+安装postgresql之后，任然没有下面两个库，还是需要自己安装
+
 find_package(**LibPQXX** REQUIRED)
+
+针对c++的库
+
+```bash
+apt show libpqxx # 没有结果
+apt install libpqxx-6.4 # 找不到这个包
+# 这个可以
+sudo apt install libpqxx-dev
+# 找到了
+-- Found LibPQXX: /usr/lib
+```
+
+
 
 find_package(**LibPQ** REQUIRED)
 
-find_package(**OpenSSL** 0.9.8 REQUIRED)
+针对c的库
+
+```bash
+apt install libpq-dev
+# 找到了
+-- Found LibPQ: /usr/bin/pg_config
+-- Found LibPQ: /usr/lib/x86_64-linux-gnu
+```
+
+
+
+#### find_package(**OpenSSL** 0.9.8 REQUIRED)
+
+https://www.jianshu.com/p/578dc82b06cc
+
+```bash
+CMake Error at /usr/share/cmake-3.23/Modules/FindPackageHandleStandardArgs.cmake:230 (message):
+  Could NOT find OpenSSL, try to set the path to OpenSSL root folder in the
+  system variable OPENSSL_ROOT_DIR (missing: OPENSSL_CRYPTO_LIBRARY
+  OPENSSL_INCLUDE_DIR) (Required is at least version "0.9.8")
+# 但是我的openssl命名已经是1.1.1版本了，上面还是报错
+root@xy-virtual-machine:/home/scidb/build# openssl version
+OpenSSL 1.1.0g  2 Nov 2017 (Library: OpenSSL 1.1.1  11 Sep 2018)
+# 安装一下，就ok了，可能是没有那个ssl-dev的包导致的
+apt install openssl libssl-dev -y
+
+# 找到了
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found suitable version "1.1.1", minimum required is "0.9.8")
+```
 
 
 
 **find_package(PkgConfig)**
+
+```
+-- Found PkgConfig: /usr/bin/pkg-config (found version "0.29.1")
+```
 
 
 
@@ -203,17 +285,83 @@ find_package(**FLEX** 2.5.35 REQUIRED)
 
 find_package(**BISON** 2.4 REQUIRED)
 
+词法解析用的
+
+https://blog.csdn.net/lishichengyan/article/details/79511161
+
+```bash
+CMake Error at /usr/share/cmake-3.23/Modules/FindPackageHandleStandardArgs.cmake:230 (message):
+  Could NOT find FLEX (missing: FLEX_EXECUTABLE) (Required is at least
+  version "2.5.35")
+
+sudo apt-get install flex bison
+# 输出
+The following additional packages will be installed:
+  libbison-dev libfl-dev libfl2 libsigsegv2 m4
+Suggested packages:
+  bison-doc flex-doc m4-doc
+The following NEW packages will be installed:
+  bison flex libbison-dev libfl-dev libfl2 libsigsegv2 m4
+...  
+```
+
+> -- Found FLEX: /usr/bin/flex (found suitable version "2.6.4", minimum required is "2.5.35")
+> -- Found BISON: /usr/bin/bison (found suitable version "3.0.4", minimum required is "2.4")
+
+
+
+
+
 find_package(**SED** REQUIRED)
+
+> -- Found SED: /bin/sed
+
+
 
 find_package(**ZLIB** REQUIRED)
 
+> -- Found ZLIB: /usr/lib/x86_64-linux-gnu/libz.so (found version "1.2.11")
+
+
+
 find_package(**BZip2** REQUIRED)
+
+> CMake Error at /usr/share/cmake-3.23/Modules/FindPackageHandleStandardArgs.cmake:230 (message):
+>   Could NOT find BZip2 (missing: BZIP2_LIBRARIES BZIP2_INCLUDE_DIR)
+
+```bash
+sudo apt install libbz2-dev
+```
+
+>-- Found BZip2: /usr/lib/x86_64-linux-gnu/libbz2.so (found version "1.0.6")
+>-- Looking for BZ2_bzCompressInit
+>-- Looking for BZ2_bzCompressInit - found
+
+
 
 find_package(**Threads** REQUIRED)
 
+> 
+
+
+
 find_package(**PythonInterp** REQUIRED)
 
+> 
+
+
+
 find_package(**EditLine** REQUIRED)
+
+> -- Could NOT find Libedit (missing: LIBEDIT_LIBRARIES LIBEDIT_INCLUDE_DIR)
+
+```bash
+apt install libedit-dev
+```
+
+找到了
+
+> -- Found Libedit: /usr/lib/x86_64-linux-gnu/libedit.so
 
 
 
@@ -224,3 +372,222 @@ find_package(**EditLine** REQUIRED)
 find_package(**BLAS** REQUIRED)
 
 find_package(**LAPACK** REQUIRED)
+
+
+
+https://blog.csdn.net/qq_23927381/article/details/108899379
+
+我们有时候要用到intel的mkl库，一般的方法是去官网上注册账号，然后下载，一步一步照着安装，最后还可能找不到mkl。再加上Ubuntu使用repo有点问题。这里提供一种非常快捷的方式直接安装最新版本的mkl。
+
+首先下载gnupg并且设置keyring：
+
+```bash
+cd /tmp
+wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+```
+
+
+
+然后直接使用apt来安装mkl2020.2：
+
+```
+sudo apt-get install intel-mkl-64bit-2020.2
+```
+
+最后source一下大功告成：todo 
+
+```bash
+source /opt/intel/compilers_and_libraries_2020/linux/mkl/bin/mklvars.sh intel64 ilp64
+```
+
+
+
+```bash
+# 安装了好多包
+The following NEW packages will be installed:
+  intel-comp-l-all-vars-19.1.2-254 intel-comp-nomcu-vars-19.1.2-254 intel-conda-index-tool-19.1.2-254 intel-conda-intel-openmp-linux-64-shadow-package-19.1.2-254 intel-conda-mkl-devel-linux-64-shadow-package-2020.2-254
+  intel-conda-mkl-include-linux-64-shadow-package-2020.2-254 intel-conda-mkl-linux-64-shadow-package-2020.2-254 intel-conda-mkl-static-linux-64-shadow-package-2020.2-254 intel-conda-tbb-linux-64-shadow-package-2020.3-254
+  intel-mkl-64bit-2020.2-108 intel-mkl-cluster-2020.2-254 intel-mkl-cluster-c-2020.2-254 intel-mkl-cluster-f-2020.2-254 intel-mkl-cluster-rt-2020.2-254 intel-mkl-common-2020.2-254 intel-mkl-common-c-2020.2-254
+  intel-mkl-common-c-ps-2020.2-254 intel-mkl-common-f-2020.2-254 intel-mkl-common-ps-2020.2-254 intel-mkl-core-2020.2-254 intel-mkl-core-c-2020.2-254 intel-mkl-core-f-2020.2-254 intel-mkl-core-ps-2020.2-254
+  intel-mkl-core-rt-2020.2-254 intel-mkl-doc-2020 intel-mkl-doc-ps-2020 intel-mkl-f95-2020.2-254 intel-mkl-f95-common-2020.2-254 intel-mkl-gnu-2020.2-254 intel-mkl-gnu-c-2020.2-254 intel-mkl-gnu-f-2020.2-254
+  intel-mkl-gnu-f-rt-2020.2-254 intel-mkl-gnu-rt-2020.2-254 intel-mkl-pgi-2020.2-254 intel-mkl-pgi-c-2020.2-254 intel-mkl-pgi-rt-2020.2-254 intel-mkl-psxe-2020.2-108 intel-mkl-tbb-2020.2-254 intel-mkl-tbb-rt-2020.2-254
+  intel-openmp-19.1.2-254 intel-psxe-common-2020.2-108 intel-tbb-libs-2020.3-254 intel-tbb-libs-common-2020.3-254
+
+```
+
+
+
+> -- DEBUG MKL_BLAS_LIBRARY=/opt/intel/compilers_and_libraries/linux/mkl/lib/intel64/libmkl_rt.so
+> -- Found MKL_BLAS
+
+
+
+
+
+
+
+其他
+
+cppunit
+
+单元测试
+
+```bash
+sudo apt install libcppunit-dev
+```
+
+> -- Checking for module 'cppunit'
+> --   Found cppunit, version 1.14.0
+
+
+
+#### 安装libcsv3
+
+```bash
+apt install libcsv3 # 这个安装了没用
+apt install libcsv-dev
+```
+
+
+
+openmpi
+
+```bash
+sudo apt-get install openmpi-bin openmpi-doc libopenmpi-dev
+```
+
+
+
+ScaLAPACK 
+
+注意，这个包必须要，否则 src/mpi下面的cmake会报错：
+
+> No SOURCES given to target: mpi
+
+
+
+先搜索包
+
+https://packages.ubuntu.com/search?keywords=ScaLAPACK+&searchon=names&suite=bionic&section=all
+
+```bash
+sudo apt install libscalapack-openmpi-dev 
+```
+
+找到了：
+
+> -- Debug: SCALAPACK_LIBRARIES is /usr/lib/x86_64-linux-gnu/libscalapack-openmpi.so
+
+
+
+rocksdb 必须的包
+
+```bash
+apt install librocksdb-dev
+# 输出
+The following additional packages will be installed:
+  libgflags2.2 librocksdb5.8 libsnappy1v5 # 这个依赖librocksdb5.8
+The following NEW packages will be installed:
+  libgflags2.2 librocksdb-dev librocksdb5.8 libsnappy1v5
+```
+
+
+
+### 报错
+
+第三方库  extern/MurmurHash报错
+
+error: this statement may fall through 
+
+原因：将警告当成错误处理
+
+make CFLAGS='-Wno-implicit-fallthrough'
+
+或者编辑 makefile文件，修改cflags，去掉-Werror
+
+
+
+#### 缺少scidb_msg.pb.h文件
+
+```bash
+/home/scidb/src/system/Resources.cpp:33:10: fatal error: network/proto/scidb_msg.pb.h: No such file or directory
+ #include <network/proto/scidb_msg.pb.h>
+```
+
+msg传输使用了protobuf，需要先生成相应的头文件才可以
+
+```bash
+# protoc -I=$SRC_DIR --cpp_out=$DST_DIR /path/to/file./home/scidb/src/network/proto/
+cd /home/scidb/src/network/proto/
+protoc  --cpp_out=./ ./scidb_msg.proto # 生成了scidb_msg.pb.cc 和 scidb_msg.pb.h
+# cmake 使用 protobuf_generate_cpp生成的命令
+protoc --cpp_out /home/scidb/build/src/network/proto -I /home/scidb/src/network/proto /home/scidb/src/network/proto/scidb_msg.proto 
+
+```
+
+
+
+### 错误：target pattern contains no %
+
+```bash
+src/network/proto/CMakeFiles/scidb_msg_lib.dir/build.make:73: *** target pattern contains no '%'.  Stop.
+CMakeFiles/Makefile2:2005: recipe for target 'src/network/proto/CMakeFiles/scidb_msg_lib.dir/all' failed
+make[1]: *** [src/network/proto/CMakeFiles/scidb_msg_lib.dir/all] Error 2
+
+# 打开build.make这个文件
+src/network/proto/scidb_msg.pb.h: ../src/network/proto/scidb_msg.proto
+src/network/proto/scidb_msg.pb.h: src/network/proto/protobuf::protoc # dz 上面报错的，就是这一行
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/scidb/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Running cpp protocol buffer compiler on scidb_msg.proto"
+	cd /home/scidb/build/src/network/proto && protobuf::protoc --cpp_out /home/scidb/build/src/network/proto -I /home/scidb/src/network/proto /home/scidb/src/network/proto/scidb_msg.proto
+```
+
+https://github.com/Ultimaker/libArcus/issues/108
+
+上面这个链接和我的问题一模一样，解决方式：指定一个protoc的绝对路径！！！
+
+```bash
+cmake -DPROTOBUF_PROTOC_EXECUTABLE=/usr/bin/protoc ../
+```
+
+
+
+### 错误：error: ‘random_device’ does not name a type;
+
+```bash
+/home/scidb/src/network/Authenticator.cpp: In member function ‘scidb::Authenticator::Cookie scidb::Authenticator::makeCookie()’:
+/home/scidb/src/network/Authenticator.cpp:140:25: error: ‘random_device’ does not name a type; did you mean ‘random_data’?
+     static thread_local random_device r;
+                         ^~~~~~~~~~~~~
+                         random_data
+/home/scidb/src/network/Authenticator.cpp:141:15: error: ‘r’ was not declared in this scope
+     _cookie = r();
+```
+
+```c++
+// 代码
+Authenticator::Cookie Authenticator::makeCookie()
+{
+    static thread_local random_device r; // random_device就是一个类
+    _cookie = r(); // dz 产生一个随机数用作cookie
+    return _cookie;
+}
+```
+
+解决办法：在Authenticator.cpp文件中，加一个头文件就可以了。不知道这个是什么问题导致的，scidb官方应该不会犯这种错误。
+
+```c++
+#include <random>
+```
+
+
+
+### 错误：MessageHandler does not name a type
+
+```
+/home/scidb/src/network/NetworkManager.cpp:1636:24: error: ‘MessageHandler’ in ‘class scidb::NetworkMessageFactory’ does not name a type
+ NetworkMessageFactory::MessageHandler
+                        ^~~~~~~~~~~~~~
+src/network/CMakeFiles/network_lib.dir/build.make:89: recipe for target 'src/network/CMakeFiles/network_lib.dir/NetworkManager.cpp.o' failed
+```
+
