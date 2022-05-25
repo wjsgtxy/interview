@@ -1,3 +1,7 @@
+
+
+
+
 2022年1月12日10:03:28
 
 #### 安装boost库
@@ -626,3 +630,84 @@ https://www.cnblogs.com/zhchy89/p/10730711.html
 > 原来，新版的rocksdb引入了USE_RTTI选项，可以对需函数的typeinfo进行开关，于是加上“USE_RTTI=1”重新编译rocksdb。
 >
 > 再在自己的项目编译时也加上-frtti。终于，ldd没有出现undefine symbol错误。
+
+
+
+> ## 编译方式
+>
+> **注意**：如果你打算在生产环境中使用 RocksDB，请不要使用 `make` 或者是 `make all` 的方式进行编译。因为这两种方式会编译出 debug 模式的 RocksDB，性能要差很多。
+>
+> RocksDB 正常是可以在不安装任何依赖的情况下编译的，但是我们推荐安装一些压缩库（见下文）。当然，新版本的 gcc/clang 还是需要的，因为使用到了 C++11 的特性。
+>
+> 以下是一些编译 RocksDB 的选择：
+>
+> - 【推荐】`make static_lib` 将会编译出一个 RocksDB 的静态库 librocksdb.a。这个静态库是 release 模式的。
+> - `make shared_lib` 将会编译出一个 RocksDB 的动态库 librocksdb.so。这个动态库是 release 模式的。
+> - `make check` 将会编译并运行所有的单元测试，得到的 RocksDB 是 debug 模式的。
+> - `make all` 将会编译出一个静态库、所有的工具和单元测试。我们的工具依赖 gflags，所以在运行 `make all` 之前必须先安装 gflags。这种方式得到的 RocksDB 是 debug 模式的，不要在生产环境中使用 `make all` 编译出来的二进制包。
+> - 默认情况下，我们编译的二进制包会针对你编译所在的平台进行优化（`-march=native` 或相同的东西），如果你的 CPU 支持 SSE4.2 指令集的话也会自动开启。当使用 `USE_SSE=1 make static_lib` 或者 `cmake -DFORCE_SSE42=ON` 去编译，且 CPU 还不支持 SSE4.2 指令集的话，就会显示一条警告信息。如果你想要一个便捷式的二进制包，就在 make 命令前添加 `PORTABLE=1`，比如说 `PORTABLE=1 make static_lib`。
+
+
+
+```bash
+# 下载rocksdb5.7版本
+# 生成动态库
+make shared_lib
+
+# 编译ok之后复制头文件到include目录，todo 应该有更好的办法，make install等，待研究
+cp -r include/* /usr/include
+cp librocksdb.so /usr/lib
+cp librocksdb.so.5 /usr/lib
+cp librocksdb.so.5.7 /usr/lib
+cp librocksdb.so.5.7.5 /usr/lib # 这个是真是的文件，其他几个是软连接
+```
+
+
+
+
+
+### 错误：(make进度到89%了)
+
+```bash
+/usr/include/c++/7/bits/uses_allocator.h:90:7: error: static assertion failed: construction with an allocator must be possible if uses_allocator                   is true
+       static_assert(__or_<
+       ^~~~~~~~~~~~~
+tests/unit/CMakeFiles/unit_tests.dir/build.make:75: recipe for target 'tests/unit/CMakeFiles/unit_tests.dir/unit_tests.cpp.o' failed
+
+```
+
+![image-20220525140900818](scidb依赖安装.assets/image-20220525140900818.png)
+
+不知道上面是什么错误，只能先把test这个 目录屏蔽掉，不构建test了
+
+
+
+2022-5-25 15:02:03 终于build成功了！！！
+
+注意，默认构建的版本是 ASSERT的build_type.
+
+```bash
+make install
+-------------------
+Install the project...
+-- Install configuration: "Assert"
+-- Installing: /usr/local/include/array
+-- Installing: /usr/local/include/array/TransientCache.h
+-- Installing: /usr/local/include/array/SharedBuffer.h
+... # include头文件
+-- Installing: /usr/local/include/network
+-- Installing: /usr/local/include/network/NetworkMessage.h
+-- Installing: /usr/local/include/network/Network.h
+... # lib库
+-- Installing: /usr/local/lib/libblas.so.3
+-- Installing: /usr/local/lib/liblapack.so.3
+... # bin文件
+-- Installing: /usr/local/bin/scidb
+... # local lib
+-- Installing: /usr/local/lib/scidb/plugins/libpoint.so
+-- Installing: /usr/local/lib/scidb/plugins/librational.so
+-- Installing: /usr/local/lib/scidb/plugins/libcomplex.so
+-- Installing: /usr/local/lib/scidb/plugins/libra_decl.so
+...
+```
+
