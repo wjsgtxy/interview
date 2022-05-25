@@ -591,3 +591,38 @@ Authenticator::Cookie Authenticator::makeCookie()
 src/network/CMakeFiles/network_lib.dir/build.make:89: recipe for target 'src/network/CMakeFiles/network_lib.dir/NetworkManager.cpp.o' failed
 ```
 
+```c++
+# MessageHandler这么定义的
+typedef std::function< void(const std::shared_ptr<MessageDescription>& ) > MessageHandler;
+```
+
+最前面还有个错误，感觉这个是主要原因
+
+> ‘function’ in namespace ‘std’ does not name a template type
+
+```c++
+// 在NetworkMessageFactory.h中添加下面的include就ok了
+#include <functional>
+```
+
+
+
+### 错误：undefined reference to `typeinfo for rocksdb::Comparator'
+
+链接的时候报的错
+
+https://blog.csdn.net/ai2000ai/article/details/47152133
+
+> ###### 混用了no-RTTI代码和RTTI代码
+>
+> 我碰到的正是混用了no-RTTI和RTTI代码的情形。项目中我们自己写的程序必须开启RTTI，而我们使用的外部的一个库使用no-RTTI编译。我们在自己的代码中需要重载一个外部库中的带虚函数的类，结果链接的时候就出现了问题。外部库中的基类使用-fno-rtti选项编译，生成的代码没有typeinfo信息，而我们的代码使用-frtti选项编译，要求基类必须要有typeinfo信息。最后，我在编译系统中做了一些dirty hack，让那个派生类所在的源文件以-fno-rtti选项编译，解决了问题。
+
+https://www.cnblogs.com/zhchy89/p/10730711.html
+
+> 最近的项目（so库）用到rocksdb，之前用的rocksdb是4.3.0，编译使用很正常。因为要升级，所以将rocksdb升级到5.13.0。
+>
+> 但是经过修改的项目，编译链接后，ldd -r xx.so 总是会出现 undefine symbol: _ZNVTrocksdb6Logger等之类的错误。
+>
+> 原来，新版的rocksdb引入了USE_RTTI选项，可以对需函数的typeinfo进行开关，于是加上“USE_RTTI=1”重新编译rocksdb。
+>
+> 再在自己的项目编译时也加上-frtti。终于，ldd没有出现undefine symbol错误。
