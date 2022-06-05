@@ -688,6 +688,22 @@ uint32_t         phys_port_cnt_ex          /* Extended number of physical port c
 
 
 
+```
+# 查看设备信息
+ibv_devinfo -v
+=======
+生成的 port1: GID
+gid[0] 是mac地址生成的
+gid[1] 是ipv4生成的的
+gid[2] 是ipv6生成的，因为我禁用了ipv6，所以我只有2个
+
+GID[  0]:               fe80:0000:0000:0000:0a00:27ff:feef:70a8
+GID[  1]:               0000:0000:0000:0000:0000:ffff:c0a8:3865
+# 我的ip是192.168.56.101， 192->0xc0, 168->0xa8, 101->0x65, 56->0x38
+```
+
+
+
 gdb调试rdma_client 
 
 ```

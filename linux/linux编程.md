@@ -184,3 +184,13 @@ The number of processors currently online .:2
 The number of processors configured..:2
 ```
 
+
+
+#### inet_pton()和inet_ntop()功能及使用方法
+
+https://blog.csdn.net/weixin_38420191/article/details/114691058
+
+##### inet_pton()
+
+功能：
+将**标准文本表示形式**的IPv4或IPv6 Internet网络地址**转换为数字二进制形式**。
