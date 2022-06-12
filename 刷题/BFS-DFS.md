@@ -50,7 +50,7 @@ int BFS(Node start, Node target) {
 | ------------------------------------------------------------ | ------------------ | ---- | ------------------------------------------------------------ |
 | [111. 二叉树的最小深度](https://leetcode.cn/problems/minimum-depth-of-binary-tree/) | 2022/05/11 20:07   | 简单 | 求最小的，用bfs，使用队列，结合while 和for循环               |
 | [752. 打开转盘锁](https://leetcode.cn/problems/open-the-lock/) | TODO               | 中等 |                                                              |
-| [127. 单词接龙](https://leetcode.cn/problems/word-ladder/)   |                    | 困难 |                                                              |
+| [127. 单词接龙](https://leetcode.cn/problems/word-ladder/)   | 2022-6-12 00:02:57 | 困难 | 40min，通过了大部分，部分超时了。 TODO                       |
 | [139. 单词拆分](https://leetcode.cn/problems/word-break/)    | 2022-5-15 16:30:57 | 中等 | 15minbfs没通过，遇到一个很难的用例，超时了，这题解法很多，bfs/dfs/dp后面再做做 |
 | [130. 被围绕的区域](https://leetcode.cn/problems/surrounded-regions/) | 2022-5-15 16:55:37 | 中等 | 30min，通过了部分用例后发现自己的解法错误，看了题解的bfs     |
 
@@ -65,8 +65,8 @@ DFS解决岛屿问题
 | [200. 岛屿数量](https://leetcode.cn/problems/number-of-islands/) | 2022年5月27日19:07:17 | 中等 | 找了好久的原因，原来是字符‘0’ 我判断和赋值成了数字0，无语啊  |
 | [1254. 统计封闭岛屿的数目](https://leetcode.cn/problems/number-of-closed-islands/) | 2022-5-29 21:11:16    | 中等 | 15min，一次性通过，套路都是一样的 dfs                        |
 | [1020. 飞地的数量](https://leetcode.cn/problems/number-of-enclaves/) | 2022-5-31 21:44:49    | 中等 | 12min, 返回的是岛屿包含的单元格数量，不是岛屿的个数，复杂一点 |
-| [695. 岛屿的最大面积](https://leetcode.cn/problems/max-area-of-island/) |                       |      |                                                              |
-| [1905. 统计子岛屿](https://leetcode.cn/problems/count-sub-islands/) |                       |      |                                                              |
+| [695. 岛屿的最大面积](https://leetcode.cn/problems/max-area-of-island/) | 2022-6-11 23:38:00    | 中等 | 6min， 一次性通过，dfs还没有忘记哈哈                         |
+| [1905. 统计子岛屿](https://leetcode.cn/problems/count-sub-islands/) | 2022-6-11 23:45:37    | 中等 | 有难度。9min，一次性通过。先把grid1中等于0而grid2中等于1的grid2中的岛屿都淹没，然后在计算grid2中剩余的岛屿数量。 |
 
 
 
