@@ -125,10 +125,12 @@ snap install cmake
 wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | sudo apt-key add -
 # 稳定版
 sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
-sudo apt-get update
+# sudo apt-get update
+# 上面安装的cmake是最新版的3.23.1 太新了，clion调试目前只支持到3.22版本
+
 # 候选发布版
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic-rc main'
-sudo apt-get update
+# sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic-rc main'
+# sudo apt-get update 
 ```
 
 ```bash
@@ -145,7 +147,7 @@ echo $FC
 
 
 
-```
+```bash
 # 安装gfortran库
 apt install gfortran
 ```
@@ -659,7 +661,7 @@ cp -r include/* /usr/include
 cp librocksdb.so /usr/lib
 cp librocksdb.so.5 /usr/lib
 cp librocksdb.so.5.7 /usr/lib
-cp librocksdb.so.5.7.5 /usr/lib # 这个是真是的文件，其他几个是软连接
+cp librocksdb.so.5.7.5 /usr/lib # 这个是真的文件，其他几个是软连接
 ```
 
 

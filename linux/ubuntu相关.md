@@ -127,6 +127,8 @@ firefox
 ```bash
 # 查看时区相关信息
 timedatectl
+# 如果是容器中，可能没有这个命令，需要自己安装，12MB左右 timedatectl is part of systemd package.
+apt install systemd
 # 查看时区列表
 timedatectl 
 # 设置时区，之后date输出的，就显示中国时区了，从UTC 更改为 CST（中国标准时间）
