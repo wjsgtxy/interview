@@ -1,3 +1,5 @@
+## 虚拟机容器运行scidb
+
 ```bash
 # 查看用户
 cat /etc/passwd
@@ -30,7 +32,7 @@ id: scidb: no such user
 ```bash
 # 连接数据库, 默认的用户postgres和数据库postgres
 psql -U user -d dbname
-
+psql -U postgres -d postgres
 # 或者, 先切换到postgres用户
 su username
 #或者 sudo -i -u postgres
@@ -111,6 +113,12 @@ pg_dump说明：http://postgres.cn/docs/9.6/app-pgdump.html
 ```bash
 # 配置文件位置，这个文件配置客户端校验 PostgreSQL Client Authentication Configuration File
 /etc/postgresql/9.3/main/pg_hba.conf
+#-------------配置--------------
+# 前面两个host的是已经存在的，后面一个需要自己根据CIDR配置
+host all all 127.0.0.1/32 md5
+host all all ::1/128 md5
+host all all W.X.Y.Z/N md5
+#------------------------------
 
 # 在运行的系统上修改这个文件之后，需要操作才能生效
 pg_ctl reload
@@ -128,6 +136,21 @@ sudo /etc/init.d/postgresql restart
 
 
 ### SciDB表
+
+```bash
+scidb-# select * from array; # 直接查询scidb中的array表，会报错，不知道为什么
+ERROR:  syntax error at or near "l"
+LINE 1: l
+
+scidb=# select * from public.array; # 需要加上schema才可以，但是默认的schema不就是public么？
+ id |        name         | flags | distribution_id
+----+---------------------+-------+-----------------
+  1 | dz_random_numbers   |     0 |               1
+  2 | dz_random_numbers@1 |     0 |               1
+(2 rows)
+```
+
+
 
 ```bash
 -----------------------------------------------------
@@ -260,7 +283,7 @@ scidb=# select * from instance;
 
 ```bash
 # 位置
-/opt/scidb/19.11/etc/config.ini # ini文件分号是注释，注意要另起一行才行，不支持行间注释
+# ini文件分号是注释，注意要另起一行才行，不支持行间注释
 /opt/scidb/19.3/etc/config.ini 
 #---------------------------------------
 [scidb]
@@ -295,7 +318,7 @@ scidb的docker容器中，root用户目录下面，有一个 .pgpass文件，内
 启动scidb
 
 ```bash
-/opt/scidb/19.11/bin/scidbctl.py start <CLUSTER_NAME>
+# /opt/scidb/19.3/bin/scidbctl.py start <CLUSTER_NAME>
 /opt/scidb/19.3/bin/scidbctl.py start
 --------------------------------------------------------------------------
 [scidbctl] Starting SciDB cluster scidb ... # 注意，这里启动的就是集群scidb,也就是config.ini最上面的[scidb]
@@ -475,14 +498,19 @@ size_t readBytes = read(_socket, boost::asio::buffer(&resultDesc->_messageHeader
 
 
 
-### scidb源码安装之后运行
+## scidb源码编译安装之后运行
 
-make install 之后，目前安装在 /usr/local/bin里面，和docker里面的/opt/scidb/19.3/bin里面的内容是一样的
+~~make install 之后，目前安装在 /usr/local/bin里面，和docker里面的/opt/scidb/19.3/bin里面的内容是一样的~~
+
+debug版本 make install之后也会把这些东西弄到 /opt/scidb/19.11/bin里面，不知道是因为和assert不同，还是上次assert版本编译后安装有问题。
+
+
 
 直接运行，会没有配置文件
 
 ```bash
-root@xy-virtual-machine:/usr/local/bin# scidbctl.py start
+# /opt/scidb/19.11/bin/scidbctl.py start <CLUSTER_NAME> 我只有一个cluster，可以不用指定
+/opt/scidb/19.11/bin/scidbctl.py start
 [scidbctl] [E] Missing config file /usr/local/etc/config.ini
 ```
 
@@ -492,14 +520,14 @@ root@xy-virtual-machine:/usr/local/bin# scidbctl.py start
 mkdir /opt/scidb/19.11/etc
 cd /opt/scidb/19.11/etc
 vi config.ini
---------------------------------------------------------------------------
+#-------------19.11配置文件--------------
 [scidb]
-base-path=/opt/scidb/19.3/DB-scidb
+base-path=/opt/scidb/19.11/DB-scidb
 base-port=1239
 db_user=scidb
-install_root=/opt/scidb/19.3
-logconf=/opt/scidb/19.3/share/scidb/log4cxx.properties
-pluginsdir= /opt/scidb/19.3/lib/scidb/plugins
+install_root=/opt/scidb/19.11
+logconf=/opt/scidb/19.11/share/scidb/log4cxx.properties
+pluginsdir= /opt/scidb/19.11/lib/scidb/plugins
 server-0=127.0.0.1,1
 execution-threads=4
 result-prefetch-threads=3
@@ -507,5 +535,50 @@ result-prefetch-queue-size=1
 operator-threads=1
 sg-send-queue-size=4
 sg-receive-queue-size=4
+
+#------------添加用户------------------
+# http://data.digitser.net/ubuntu/zh-CN/useradd.html
+# -c 注释 -m 创建用户主目录 -G 新帐户补充组列表 -s 登录shell -U 创建与用户同名的组
+useradd -c "scidb administrator" -m -G admin -s /bin/bash -U scidb
+# 添加失败，上面提示 admin组不存在
+# 查看有哪些组,发现没有admin组，有很多组，包括root, adm, sudo等
+vi /etc/group
+# 先添加到sudo组吧
+useradd -c "scidb administrator" -m -G sudo -s /bin/bash -U scidb
+
+#------------添加目录------------------
+mkdir /opt/scidb/19.11/DB-scidb
+# https://blog.csdn.net/qq_34447388/article/details/90754535
+#chown -R scidb /opt/scidb/19.11/DB-scidb 只变了用户，文件夹的数组还是root
+chown -R scidb:scidb /opt/scidb/19.11/DB-scidb
+
+mkdir -p /opt/scidb/19.11/DB-scidb/0/0
+mkdir -p /opt/scidb/19.11/DB-scidb/0/1
 ```
+
+
+
+##### 添加pgpass文件： ~<SCIDB_USER>/.pgpass
+
+```bash
+vi /root/.pgpass
+# <COORDINATOR>:<PG_PORT>:<CLUSTER_NAME>:<DB_USER>:<DB_PASSWORD>
+# 本地单server如下：
+127.0.0.1:5432:scidb:scidb:Y2FhZTBiNjU5NDk5NzFkNzg5ZjNhZDNh
+
+# 设置权限
+chmod 0600 ~/.pgpass
+```
+
+
+
+只编译network_lib库
+
+```bash
+cd /scidb/build
+# 这个是个static库
+make network_lib
+```
+
+
 

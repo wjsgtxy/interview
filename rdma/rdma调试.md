@@ -132,7 +132,7 @@ root@xyvm2:/home/# dpkg -L libibverbs-dev
 ...
 -----------输出end-----------------
 
-# ibverbs示例程序 这些事例程序，全部是rdma项目里面libibverbs目录里面examples子目录里面的程序，该目录里面的CMakeLists.txt里面也包含了这些可执行文件，最后生成一个静态库static ibverbs_tools
+# ibverbs示例程序 这些示例程序，全部是rdma项目里面libibverbs目录里面examples子目录里面的程序，该目录里面的CMakeLists.txt里面也包含了这些可执行文件，最后生成一个静态库static ibverbs_tools
 root@xyvm2:/home/# dpkg -L ibverbs-utils
 -----------输出begin---------------
 /usr/bin/ibv_asyncwatch
@@ -808,5 +808,32 @@ readelf -S filename | grep debug
   [31] .debug_line       PROGBITS         0000000000000000  0001320f
   [32] .debug_str        PROGBITS         0000000000000000  00014786
   [33] .debug_ranges     PROGBITS         0000000000000000  00018f49
+```
+
+
+
+
+
+##### rdma_cma 头文件找不到：
+
+```bash
+apt-get install libibverbs-dev # 这个解决不了，只有ibverbs相关的，没有cm的
+apt-get install librdmacm-dev # 只有这个可以
+
+dpkg -L librdmacm-dev
+-----------------------------
+/usr
+/usr/include
+/usr/include/infiniband
+/usr/include/infiniband/ib.h
+/usr/include/rdma
+/usr/include/rdma/rdma_cma.h # 安装在这里了
+/usr/include/rdma/rdma_cma_abi.h
+/usr/include/rdma/rdma_verbs.h
+/usr/include/rdma/rsocket.h
+/usr/lib
+/usr/lib/x86_64-linux-gnu
+/usr/share
+...
 ```
 

@@ -123,7 +123,10 @@ docker cp 9a5a:/opt/scidb/19.3/DB-scidb/0/0/scidb.log /home/log
 
 ##### 进入容器
 
-```
-docker exec -it 容器id /bin/bash
+```bash
+# docker exec -it 容器id /bin/bash
+docker start 9a5a
+# 进入scidb容器
+docker exec -it 9a5a /bin/bash 
 ```
 

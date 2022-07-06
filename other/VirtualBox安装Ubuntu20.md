@@ -166,6 +166,34 @@ sudo update-grub
 
 
 
+2022年7月6日14:40:54
+
+开了虚拟机之后，电脑睡眠自己变成关机了，然后开启虚拟机就出问题了，ens32网卡没有ipv4地址了，只有ipv6地址，按照上面的方式禁用了ipv6，发现确实禁用了，但是ipv4地址仍然没有。按照如下方式解决：
+
+- 打开文件sudo vi /etc/netplan/xxxx.ymal 我的是一个 0-all 这种文件
+
+- 如果没有此文件通过sudo netplan generate命令自动生成
+
+- 修改文件内容
+
+```
+network:
+    ethernets:
+        ens32:
+            dhcp4: true
+    version: 2
+```
+
+- 保存文件并应用更改
+
+```bash
+sudo netplan apply #  再次查看，出现ip
+```
+
+- 这个时候我moba还连接不上，cmd也ping不通，重启之后一切ok
+
+
+
 ## 设置网卡混杂模式
 
 **混杂模式**

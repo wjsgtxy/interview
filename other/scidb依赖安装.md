@@ -115,8 +115,10 @@ sudo apt-get install build-essential
 
 
 
+##### 安装cmake
+
 ```bash
-# 只能安装3.10版本的，不是最新版本的
+# 下面这种方式只能安装3.10版本的，版本太旧了
 apt install cmake 
 snap install cmake
 
@@ -126,11 +128,21 @@ wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | 
 # 稳定版
 sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
 # sudo apt-get update
-# 上面安装的cmake是最新版的3.23.1 太新了，clion调试目前只支持到3.22版本
 
 # 候选发布版
 # sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic-rc main'
 # sudo apt-get update 
+
+
+# 上面安装的稳定版cmake是最新版的3.23.1 太新了，clion调试目前只支持到3.22版本
+# 手动安装cmake 3.22版本 2022年6月29日09:31:41
+# cmake官网下载cmake安装的sh文件 
+mkdir /usr/local/cmake
+chmod +x cmake-3.22.5-linux-x86_64.sh
+./cmake-3.22.5-linux-x86_64.sh --skip-license --exclude-subdir
+# 这样就会在当前目录下面生成bin, doc, man, share等目录
+# 然后需要手动软连接到/usr/bin目录下面，否则clion配置远程环境找不到cmake
+ln -sf $(pwd)/bin/*  /usr/bin/
 ```
 
 ```bash
@@ -145,14 +157,15 @@ echo $FC
 
 
 
-
+##### 安装gfortran库
 
 ```bash
-# 安装gfortran库
 apt install gfortran
 ```
 
-cmake依赖
+
+
+#### cmake依赖
 
 **find_package(MPI)**
 
@@ -502,7 +515,7 @@ The following NEW packages will be installed:
 
 ### 报错
 
-第三方库  extern/MurmurHash报错
+#### 第三方库  extern/MurmurHash报错
 
 error: this statement may fall through 
 
@@ -607,7 +620,7 @@ typedef std::function< void(const std::shared_ptr<MessageDescription>& ) > Messa
 > ‘function’ in namespace ‘std’ does not name a template type
 
 ```c++
-// 在NetworkMessageFactory.h中添加下面的include就ok了
+// 在 NetworkMessageFactory.h中添加下面的include就ok了
 #include <functional>
 ```
 
@@ -711,5 +724,154 @@ Install the project...
 -- Installing: /usr/local/lib/scidb/plugins/libcomplex.so
 -- Installing: /usr/local/lib/scidb/plugins/libra_decl.so
 ...
+```
+
+
+
+#### SciDB源码编译 DEBUG版本-2022年6月29日10:08:18
+
+目录在 /scidb/build下面
+
+```shell
+cmake -D CMAKE_BUILD_TYPE=debug ..
+---------------------------------------------------------------------------------------------
+root@xy-virtual-machine:/scidb/build# cmake -D CMAKE_BUILD_TYPE=debug ..
+-- The C compiler identification is GNU 7.5.0
+-- The CXX compiler identification is GNU 7.5.0
+-- The Fortran compiler identification is GNU 7.5.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/gcc-7 - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/g++-7 - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting Fortran compiler ABI info
+-- Detecting Fortran compiler ABI info - done
+-- Check for working Fortran compiler: /usr/bin/gfortran-7 - skipped
+-- Performing Test SCIDB_CXX_HAS_FLAG
+-- Performing Test SCIDB_CXX_HAS_FLAG - Success
+-- Performing Test SCIDB_CXX_HAS_FLAG
+-- Performing Test SCIDB_CXX_HAS_FLAG - Success
+-- Performing Test SCIDB_CXX_HAS_FLAG
+-- Performing Test SCIDB_CXX_HAS_FLAG - Success
+-- Performing Test SCIDB_CXX_HAS_FLAG
+-- Performing Test SCIDB_CXX_HAS_FLAG - Success
+-- CLIKE_LANGUAGE_WARNINGS =  -Wall -Wextra -pedantic -Wconversion -Wno-strict-aliasing -Wno-unused-parameter -Wno-variadic-macros -Wno-error=unused-result -Wno-error=vla -Wno-error=sign-compare -Wno-error=sized-deallocation -Wno-error=deprecated-declarations
+-- Build type: debug
+-- Found Git: /usr/bin/git (found version "2.17.1")
+-- SCIDB_VERSION_MAJOR : 19
+-- SCIDB_VERSION_MINOR : 11
+-- SCIDB_VERSION_PATCH : 5
+-- SCIDB_BUILD_REVISION: f8334b6
+-- SCIDB_SHORT_VERSION : 19.11
+-- SCIDB_VERSION_MMP   : 19.11.5
+-- SCIDB_VERSION       : 19.11.5.f8334b6
+-- CMAKE_INSTALL_PREFIX Initialized to default setting to: /opt/scidb/19.11
+-- Could NOT find MPI_C (missing: MPI_C_LIB_NAMES MPI_C_HEADER_DIR MPI_C_WORKS)
+-- Could NOT find MPI_CXX (missing: MPI_CXX_LIB_NAMES MPI_CXX_HEADER_DIR MPI_CXX_WORKS)
+-- Could NOT find MPI_Fortran (missing: MPI_Fortran_LIB_NAMES MPI_Fortran_F77_HEADER_DIR MPI_Fortran_MODULE_DIR MPI_Fortran_WORKS)
+-- Could NOT find MPI (missing: MPI_C_FOUND MPI_CXX_FOUND MPI_Fortran_FOUND)
+-- Found MPI_C: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so (found version "3.1")
+-- Found MPI_CXX: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so (found version "3.1")
+-- Found MPI_Fortran: /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_usempif08.so (found version "3.1")
+-- Found MPI: TRUE (found version "3.1")
+--  ------- MPI_INST_DIR = /usr ---
+--  ------- MPI_FLAVOR = openmpi ---
+-- Found LibRT: /usr/lib/x86_64-linux-gnu/librt.so
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE
+-- Found Boost: /usr/include (found suitable version "1.65.1", minimum required is "1.54") found components: date_time filesystem program_options regex serialization system thread atomic chrono
+-- Found Protobuf: /usr/lib/x86_64-linux-gnu/libprotobuf.so;-lpthread (found version "3.0.0")
+-- Found Log4CXX: /usr/lib/x86_64-linux-gnu/liblog4cxx.so
+-- LOG4CXX - /usr/lib/x86_64-linux-gnu/liblog4cxx.so
+-- Found Doxygen: /usr/bin/doxygen (found version "1.8.13") found components: doxygen missing components: dot
+-- Found LibPQXX: /usr/lib
+-- Found LibPQ: /usr/bin/pg_config
+-- Found LibPQ: /usr/lib/x86_64-linux-gnu
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found suitable version "1.1.1", minimum required is "0.9.8")
+-- Found PkgConfig: /usr/bin/pkg-config (found version "0.29.1")
+-- Checking for module 'cppunit'
+--   Found cppunit, version 1.14.0
+-- Found FLEX: /usr/bin/flex (found suitable version "2.6.4", minimum required is "2.5.35")
+-- Found BISON: /usr/bin/bison (found suitable version "3.0.4", minimum required is "2.4")
+-- Found SED: /bin/sed
+-- Found ZLIB: /usr/lib/x86_64-linux-gnu/libz.so (found version "1.2.11")
+-- Found BZip2: /usr/lib/x86_64-linux-gnu/libbz2.so (found version "1.0.6")
+-- Looking for BZ2_bzCompressInit
+-- Looking for BZ2_bzCompressInit - found
+-- Found PythonInterp: /usr/bin/python (found version "2.7.17")
+-- Found Libedit: /usr/lib/x86_64-linux-gnu/libedit.so
+-- DEBUG MKL_BLAS_LIBRARY=/opt/intel/compilers_and_libraries/linux/mkl/lib/intel64/libmkl_rt.so
+-- Found MKL_BLAS
+-- Configuring /scidb/src/system/Constants.cpp.in as /scidb/build/src/system/Constants.cpp
+-- *****BEGIN src/mkl/CMakeLists.txt *******************************
+DEBUG,adding overriding softlinks from platform blas and lapack to mkl
+-- creating symlink from /scidb/build/softlinks/libblas.so.3 to /opt/intel/compilers_and_libraries/linux/mkl/lib/intel64/libmkl_rt.so
+-- creating symlink from /scidb/build/softlinks/liblapack.so.3 to /opt/intel/compilers_and_libraries/linux/mkl/lib/intel64/libmkl_rt.so
+-- ***** END src/mkl/CMakeLists.txt *******************************
+-- ****************** BEGIN src/mpi/CMakeLists.txt ******************
+-- Found SCALAPACK: /usr/lib/x86_64-linux-gnu/libscalapack-openmpi.so
+-- Debug: SCALAPACK_LIBRARIES is /usr/lib/x86_64-linux-gnu/libscalapack-openmpi.so
+-- Debug: SCALAPACK_INC_DIR is
+-- Debug: Building MPI Slave
+-- ****************** BEGIN mpi/slaving/CMakeLists.txt ******************
+-- Debug:src/mpi/slaving BLAS_LIBRARIES  is /opt/intel/compilers_and_libraries/linux/mkl/lib/intel64/libmkl_rt.so
+-- Debug:src/mpi/slaving LAPACK_LIBRARIES is /opt/intel/compilers_and_libraries/linux/mkl/lib/intel64/libmkl_rt.so
+-- Debug:src/mpi/slaving SCALAPACK_LIBRARIES is /usr/lib/x86_64-linux-gnu/libscalapack-openmpi.so
+-- Debug:src/mpi/slaving MPI_LIBRARIES is /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so;/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
+-- ****************** END mpi/slaving/CMakeLists.txt ******************
+-- ****************** END src/mpi/CMakeLists.txt ******************
+-- *****BEGIN dense_linear_algebra/CMakeLists.txt ***********************
+-- MPI_Fortran_COMPILER=/usr/bin/mpif90.openmpi
+-- Debug: MPI_Fortran_COMPILER is /usr/bin/mpif90.openmpi
+-- *****END linear_algebra/CMakeLists.txt ***********************
+-- **BEGIN linear_algebra/CMakeLists.txt --------------------------------
+-- **END linear_algebra/CMakeLists.txt --------------------------------
+-- ****************** BEGIN src/storage/CMakeLists.txt ******************
+-- ****************** END src/storage/CMakeLists.txt ******************
+-- copying /scidb/tests to /scidb/build/tests
+-- install.cmake: copying library redirection links from /scidb/build/softlinks to lib
+-- ****************** END CMakeLists.txt ******************
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /scidb/build
+```
+
+
+
+```bash
+make
+make install
+-----------------
+debug版本的 make install 最后都安装到opt的scidb目录下面了，和上面assert版本不同！！！
+Installing: /opt/scidb/19.11/bin
+```
+
+
+
+#### DEBUG编译过程遇到的问题
+
+##### protobuf头文件缺失，和上面一样
+
+```
+/scidb/src/system/Resources.cpp:33:10: fatal error: network/proto/scidb_msg.pb.h: No such file or directory
+ #include <network/proto/scidb_msg.pb.h>
+```
+
+解决：
+
+```
+protoc --cpp_out /scidb/build/src/network/proto -I /scidb/src/network/proto /scidb/src/network/proto/scidb_msg.proto 
 ```
 

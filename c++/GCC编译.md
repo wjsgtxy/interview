@@ -98,6 +98,9 @@ unset C_INCLUDE_PATH
 echo $C_INCLUDE_PATH
 # 在当前session中设置或者直接到 ~/.bashrc中设置
 export C_INCLUDE_PATH=$C_INCLUDE_PATH:/home/rdmacore/rdma-core-master/build/include/
+
+# 2022年7月5日17:16:09 scidb rdma 我的rdma core没有build
+export CPATH=$CPATH:/home/rdma/rdma-core-master/build/include/
 ```
 
 
