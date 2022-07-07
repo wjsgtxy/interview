@@ -95,7 +95,29 @@ drop database dbname;
 \prompt [文本] 名称
 # 改密码                  
 \password [USERNAME]
+
+psql 数据库名  --连接数据库
+select rolname,rolpassword from pg_authid;--查看用户名密码
+select usename,passwd from pg_shadow;--查看用户名密码
+select version();	-- 查看版本
+select current_database();--查看当前数据库
+\l					--查看所有数据库
+\dt					--查看表
+\password username	--修改密码
+\password           --设置密码。
+\?                  --查看psql命令列表。
+\c [database_name]  --连接其他数据库，切换数据库。
+\conninfo           --列出当前数据库和连接的信息。
+\d                  --列出当前数据库的所有表格。
+\d [table_name]     --列出某一张表格的结构。
+\du                 --列出所有用户。
+\e                  --打开文本编辑器。
+help				--帮助
+\h                  --查看SQL命令的解释，比如\h select。
+\q					--退出
 ```
+
+
 
 备份
 
@@ -354,6 +376,7 @@ root@9a5ae7fc5a66:/opt/scidb/19.3/bin# ./scidbctl.py stop
 
 ```bash
 scidbctl.py --config <config.ini> status <CLUSTER_NAME>
+/opt/scidb/19.11/bin/scidbctl.py status
 --------------------------------------------------------------------------
 root@9a5ae7fc5a66:/opt/scidb/19.3/bin# scidbctl.py --config /opt/scidb/19.3/etc/config.ini status scidb
 PID     PPID    CMD             SERVER
@@ -510,7 +533,9 @@ debug版本 make install之后也会把这些东西弄到 /opt/scidb/19.11/bin�
 
 ```bash
 # /opt/scidb/19.11/bin/scidbctl.py start <CLUSTER_NAME> 我只有一个cluster，可以不用指定
+# /opt/scidb/19.3/bin/scidbctl.py start
 /opt/scidb/19.11/bin/scidbctl.py start
+/opt/scidb/19.11/bin/scidbctl.py stop
 [scidbctl] [E] Missing config file /usr/local/etc/config.ini
 ```
 
@@ -521,10 +546,11 @@ mkdir /opt/scidb/19.11/etc
 cd /opt/scidb/19.11/etc
 vi config.ini
 #-------------19.11配置文件--------------
-[scidb]
+[scidb_cluster]
 base-path=/opt/scidb/19.11/DB-scidb
 base-port=1239
 db_user=scidb
+pg-port=5432
 install_root=/opt/scidb/19.11
 logconf=/opt/scidb/19.11/share/scidb/log4cxx.properties
 pluginsdir= /opt/scidb/19.11/lib/scidb/plugins
@@ -536,21 +562,22 @@ operator-threads=1
 sg-send-queue-size=4
 sg-receive-queue-size=4
 
-#------------添加用户------------------
+#------------1.添加用户------------------
 # http://data.digitser.net/ubuntu/zh-CN/useradd.html
 # -c 注释 -m 创建用户主目录 -G 新帐户补充组列表 -s 登录shell -U 创建与用户同名的组
-useradd -c "scidb administrator" -m -G admin -s /bin/bash -U scidb
+# useradd -c "scidb administrator" -m -G admin -s /bin/bash -U scidb
 # 添加失败，上面提示 admin组不存在
 # 查看有哪些组,发现没有admin组，有很多组，包括root, adm, sudo等
 vi /etc/group
 # 先添加到sudo组吧
 useradd -c "scidb administrator" -m -G sudo -s /bin/bash -U scidb
 
-#------------添加目录------------------
+#------------2.添加目录------------------
 mkdir /opt/scidb/19.11/DB-scidb
 # https://blog.csdn.net/qq_34447388/article/details/90754535
-#chown -R scidb /opt/scidb/19.11/DB-scidb 只变了用户，文件夹的数组还是root
-chown -R scidb:scidb /opt/scidb/19.11/DB-scidb
+#chown -R scidb /opt/scidb/19.11/DB-scidb 只变了用户，文件夹的组还是root
+#chown -R scidb:scidb /opt/scidb/19.11/DB-scidb
+chown -R scidb:scidb /opt/scidb
 
 mkdir -p /opt/scidb/19.11/DB-scidb/0/0
 mkdir -p /opt/scidb/19.11/DB-scidb/0/1
@@ -560,25 +587,182 @@ mkdir -p /opt/scidb/19.11/DB-scidb/0/1
 
 ##### 添加pgpass文件： ~<SCIDB_USER>/.pgpass
 
+.pgpass 是 连接 postgresql 时使用的密码文件，通常位置为 ~/.pgpass。
+
+~/.pgpass 上的权限必须不允许所有人或组内访问，可以用命令chmod 0600 ~/.pgpass 实现。如果权限没有这么严格，该文件将被忽略。
+
 ```bash
 vi /root/.pgpass
 # <COORDINATOR>:<PG_PORT>:<CLUSTER_NAME>:<DB_USER>:<DB_PASSWORD>
+# 其实格式为：hostname:port:database:username:password 只不过scidb帮我们创建了scidb_cluster的数据库了
 # 本地单server如下：
-127.0.0.1:5432:scidb:scidb:Y2FhZTBiNjU5NDk5NzFkNzg5ZjNhZDNh
+#127.0.0.1:5432:scidb_cluster:scidb:Y2FhZTBiNjU5NDk5NzFkNzg5ZjNhZDNh
+127.0.0.1:5432:scidb_cluster:scidb:123456
 
-# 设置权限
+# 设置权限!!! 注意，不能设置为777！！！
 chmod 0600 ~/.pgpass
+
+# postgres查看所有用户
+\du
+# 创建用户
 ```
 
 
 
-只编译network_lib库
+更改数据库postgres用户密码：
+
+```
+ALTER USER postgres WITH PASSWORD 'postgres';
+ALTER USER scidb WITH PASSWORD '123456';
+```
+
+更改linux中postgres用户密码：
+
+```bash
+# 删除用户postgres的密码
+sudo passwd -d postgres
+# 添加密码，需要输入两次密码确认，我设置的是 'postgres'
+sudo -u postgres passwd
+
+# linux scidb用户我设置了 123456的密码
+sudo passwd -d scidb
+sudo -u scidb passwd
+```
+
+
+
+添加权限，让linux postgres用户有权限访问scidb用户的目录
+
+```bash
+BASE_PATH=/opt/scidb/19.11/DB-scidb # e.g. /home/scidb/base_path
+SCIDB_USER=scidb # e.g. scidb
+# user_group 我是 1001
+USER_GROUP=$(id -g ${SCIDB_USER} )
+# 下面这个我输出的是 /home/scidb
+USER_HOME=$(eval echo "~${SCIDB_USER}")
+
+# sudo usermod -G ${USER_GROUP} -a postgres
+sudo usermod -G 1001 -a postgres
+
+# sudo chmod g+rx ${USER_HOME}
+sudo chmod g+rx /home/scidb
+
+# sudo mkdir -p ${BASE_PATH}
+# sudo chown ${SCIDB_USER}:${USER_GROUP} ${BASE_PATH} # 这个之前已经执行过了
+# sudo chmod g+rx ${BASE_PATH}
+sudo chmod g+rx /opt/scidb/19.11/DB-scidb
+```
+
+
+
+```bash
+# 初始化系统目录
+sudo -u postgres /opt/scidb/19.11/bin/scidbctl.py init-syscat scidb_cluster
+# 要求输入两次密码，我都输入了postgres，也不知道对不对，然后就创建了scidb的pg用户，同时创建了scidb_cluster数据库
+# 但是数据库中没有找到表，感觉创建失败了
+
+# 初始化数据库， pgpass文件ok，这个就成功了，之前一直不成功，成功之后，数据库中的表就创建了！
+/opt/scidb/19.11/bin/scidbctl.py --config /opt/scidb/19.11/etc/config.ini init-cluster scidb_cluster
+```
+
+
+
+```bash
+# 查看状态，比docker里面的多了好多，docker里面只有2个
+/opt/scidb/19.11/bin/scidbctl.py status
+---------------------------------------------
+PID     PPID    CMD             SERVER
+8334    6659    SciDB-0-0-scidb 127.0.0.1 # 这个的父进程6659是 /bin/bash 
+8337    8334    SciDB-0-0-scidb 127.0.0.1 # 这个是上面那个衍生出来的，父进程是上面那个
+9021    9017    SciDB-0-0-scidb_cluster 127.0.0.1
+8335    6659    SciDB-0-1-scidb 127.0.0.1
+8336    8335    SciDB-0-1-scidb 127.0.0.1
+9020    9019    SciDB-0-1-scidb_cluster 127.0.0.1
+
+# 上面8334 命令是/opt/scidb/19.3/DB-scidb/0/0/SciDB-0-0-scidb --host 127.0.0.1 --port 1239 --storage /opt/scidb/19.3/DB-scidb/0
+# 是19.3，感觉是docker里面的也混在这个里面了。。。
+# 8337：/opt/scidb/19.3/DB-scidb/0/0/SciDB-0-0-scidb --host 127.0.0.1 --port 1239 --storage /opt/scidb/19.3/DB-scidb/0
+# 9021：/opt/scidb/19.11/DB-scidb/0/0/SciDB-0-0-scidb_cluster --host 127.0.0.1 --port 1239 --storage /opt/scidb/19.11/
+# 这个9021才是我自己启动的scidb！
+
+# 所以关闭dokcer再看看, 这次就只有2个剩下了
+docker stop 9a5a
+/opt/scidb/19.11/bin/scidbctl.py status
+----------------------------------------
+PID     PPID    CMD             SERVER
+9021    9017    SciDB-0-0-scidb_cluster 127.0.0.1
+9020    9019    SciDB-0-1-scidb_cluster 127.0.0.1
+
+# 9017的启动命令，就是把所有的参数都放在命令行中了
+/opt/scidb/19.11/DB-scidb/0/0/SciDB-0-0-scidb_cluster --host 127.0.0.1 --port 1239 --storage /opt/scidb/19.11/DB-scidb/0/0/storage.cfg17 --base-path=/opt/scidb/19.11/DB-scidb --base-port=1239 --db-user=scidb --install-root=/opt/scidb/19.11 --logconf=/opt/scidb/19.11/share/scidb/log4cxx.properties --pluginsdir=/opt/scidb/19.11/lib/scidb/plugins --execution-threads=4 --result-prefetch-threads=3 --result-prefetch-queue-size=1 --operator-threads=1 --sg-send-queue-size=4 --sg-receive-queue-size=4 --db-host=127.0.0.1 --pg-host=127.0.0.1 --pg-port=5432 --pg-user=postgres --ssh-port=22 --pgpassfile=/root/.pgpass --catalog=host=127.0.0.1 port=5432 dbname=scidb_cluster user=scidb
+```
+
+
+
+```bash
+# 安装htop查看线程信息
+apt-get install htop
+htop # F2进入设置，在左侧第二项display options中勾选 show tree 和 show custom thread name即可。
+```
+
+![image-20220706202603793](scidb相关.assets/image-20220706202603793.png)
+
+~~可以看到上面一个instance启动了好些个线程(9个)，另外还包括2个rocksdb线程。~~  9个是之前的，后面我自己创建了一个rdma的service，就是10个线程了。
+
+把docker启动之后，看docker中的scidb，也是9个线程，同时19.3好像还没用rocksdb
+
+![image-20220706203205704](scidb相关.assets/image-20220706203205704.png)
+
+
+
+```bash
+# ps -T -p <pid> 这种方式也能查看进程下面的线程
+# ps -T -p 9017
+ps -T -p 9021
+------------------------------------------
+root@xy-virtual-machine:~# ps -T -p 9021
+   PID   SPID TTY          TIME CMD
+  9021   9021 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9024 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9025 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9026 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9027 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9028 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9029 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9037 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9038 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9039 pts/0    00:00:00 SciDB-0-0-scidb
+  9021   9054 pts/0    00:00:00 rocksdb:bg0
+  9021   9055 pts/0    00:00:00 rocksdb:bg1
+
+```
+
+
+
+
+
+### SciDB编译
+
+###### 只编译network_lib库
 
 ```bash
 cd /scidb/build
-# 这个是个static库
+# 这个是个static库, 注意，之前添加了一些文件，make的时候这个一直没有啥变化，一下就构建完成了，后面才发现是因为cmake文件中没有将新添加的文件加入src依赖中。。。
 make network_lib
 ```
 
 
 
+###### 重新编译可执行文件
+
+```bash
+# entry中添加了代码，executalbe可执行文件scidb依赖了 entry.cpp
+make scidb
+# 最后报了一个error, 但是好像还是编译成功了：error: scidb(.debug_info) is too large (0xaa23f1c bytes) 算了一下，大概178MB
+```
+
+
+
+/opt/scidb/19.11/bin/scidbctl.py start
+
+/opt/scidb/19.11/bin/scidbctl.py stop

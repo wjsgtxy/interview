@@ -283,3 +283,14 @@ log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss.SSSSSS} [%t]
 2022-06-23 06:25:49.000185 [0x7f06e49cf700] [TRACE]: OperatorDist::setInheritedDistType: operator list _inheritedDistType hashed
 ```
 
+
+
+2022年7月6日20:52:59 更改日志输出格式
+
+```properties
+log4j.rootLogger=DEBUG, file
+...
+# 在最后面添加一个%l 可以输出方法和行数等
+log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss.SSSSSS} [%t] [%-5p] [%l]: %m%n
+```
+
