@@ -76,8 +76,6 @@ ib_send_bw -d rocep0s8 192.168.56.101
 
 
 
-
-
 ## 相关软件包安装
 
 | 软件包名          | 主要功能                           |
@@ -836,4 +834,6 @@ dpkg -L librdmacm-dev
 /usr/share
 ...
 ```
+
+
 

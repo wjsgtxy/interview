@@ -554,7 +554,8 @@ pg-port=5432
 install_root=/opt/scidb/19.11
 logconf=/opt/scidb/19.11/share/scidb/log4cxx.properties
 pluginsdir= /opt/scidb/19.11/lib/scidb/plugins
-server-0=127.0.0.1,1
+server-0=192.168.40.129,1
+server-1=192.168.40.130,1
 execution-threads=4
 result-prefetch-threads=3
 result-prefetch-queue-size=1
@@ -598,6 +599,7 @@ vi /root/.pgpass
 # 本地单server如下：
 #127.0.0.1:5432:scidb_cluster:scidb:Y2FhZTBiNjU5NDk5NzFkNzg5ZjNhZDNh
 127.0.0.1:5432:scidb_cluster:scidb:123456
+192.168.40.129:5432:scidb_cluster:scidb:123456
 
 # 设置权限!!! 注意，不能设置为777！！！
 chmod 0600 ~/.pgpass
@@ -766,3 +768,27 @@ make scidb
 /opt/scidb/19.11/bin/scidbctl.py start
 
 /opt/scidb/19.11/bin/scidbctl.py stop
+
+
+
+
+
+#### 添加ssh key实现节点间免密
+
+```bash
+# 新建秘钥
+ssh-keygen
+
+# ssh-copy-id - 将你的公共密钥填充到一个远程机器上的authorized_keys文件中。
+# ssh-copy-id [-i [identity_file]] [user@]machine
+ssh-copy-id -i ~/.ssh/id_rsa.pub <SCIDB_USER>@localhost
+ssh-copy-id -i ~/.ssh/id_rsa.pub <SCIDB_USER>@0.0.0.0
+ssh-copy-id -i ~/.ssh/id_rsa.pub <SCIDB_USER>@127.0.0.1
+
+# 这个也是使用ssh登录，需要输入对端的密码
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.40.130
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.40.129
+
+# 现在就可以使用ssh免密登录了
+ssh 192.168.40.130
+```

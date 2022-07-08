@@ -147,3 +147,91 @@ LC_TIME=en_DK.UTF-8
 #### Ubuntu systemctl
 
 https://blog.csdn.net/skh2015java/article/details/94012643
+
+
+
+### 添加开机启动脚本
+
+update-rc.d命令用于安装或移除System-V风格的初始化脚本连接。脚本是存放在 /etc/init.d/目录下的，我们可以直接在/etc/init.d/目录下创建执行脚本，然后在rcN.d或者rcS.d中创建软链接，系统启动时会从rcS-rc0…rc6顺序启动文件夹里的启动脚本
+
+- rcN 0（关闭系统） 
+- 1（单用户模式，只允许root用户对系统进行维护。） 
+- 2 到 5（多用户模式，其中3为字符界面，5为图形界面。） 
+- 6（重启系统）
+
+/etc 目录下面有 rc0.d 到 rc6.d 加上rcS.d，对应不同的系统启动模式。
+
+
+
+
+1、进入 /etc/init.d/ 目录
+
+```bash
+[root@Ubuntu ~]# cd /etc/init.d/
+```
+
+2、新建一个自定义名称的sh脚本，这里以 xxx 名称为例建立一个 xxx.sh 的脚本
+
+```bash
+[root@Ubuntu /etc/init.d/]# vi softroce_init.sh
+```
+
+```bash
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          softroce_init.sh
+# Required-start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: starts softroce_init.sh
+# Description:       starts softroce_init.sh
+### END INIT INFO
+
+# 这里为需要执行的命令
+echo "dz start soferoce rdma_rxe"
+modprobe rdma_rxe
+rxe_cfg add ens32
+```
+
+
+注：脚本内容必须包含 ### BEGIN INIT INFO   ......    ### END INIT INFO   不然会报错误：missing LSB tags and overrides
+
+3、赋予脚本权限
+
+```bash
+[root@Ubuntu /etc/init.d/]# sudo chmod 775 ./softroce_init.sh        # xxx为你的脚本文件名 
+```
+
+4、然后执行以下命令
+
+```bash
+[root@Ubuntu /etc/init.d/]# sudo update-rc.d softroce_init.sh defaults 90        # xxx为你的脚本文件名
+```
+
+5、最后重启系统即可：
+
+```bash
+reboot
+```
+
+6、查看服务列表
+
+```bash
+sudo service --status-all # 确实在输出里面看到了 [ + ]  softroce_init.sh
+```
+
+这时应该能看到新加开机启动脚本（new_service.sh）的名字在列表中；说明开机时会启动这个sh脚本的。
+附加：看到列表中，启动前面会可能出现以下三种状态de
+
+- [+] –具有此标志的服务当前正在运行。
+- [–] –具有此标志的服务当前未运行。
+- [?] –没有 状态开关的服务。
+
+
+
+附：取消开机启动脚本
+
+```bash
+[root@Ubuntu /etc/init.d/]# sudo update-rc.d -f softroce_init.sh remove         # 移除脚本，XXX为你的脚本文件名
+```

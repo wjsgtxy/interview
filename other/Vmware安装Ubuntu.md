@@ -194,3 +194,77 @@ sudo apt-get install python3.8
 #### 其他软件的安装
 
 https://blog.csdn.net/gatieme/article/details/44917753
+
+
+
+#### Vmware克隆虚拟机
+
+注意，克隆之后会出现ip冲突，需要重新设置网卡，然后修改主机名称：
+
+```bash
+vi /etc/hostname
+reboot
+```
+
+
+
+#### 直接配置ip地址
+
+克隆虚拟机之后ip老是冲突，两个虚拟机总是一个ip，不知道为什么，命名主机名称和网卡mac都更改过来，还是一样。
+
+```
+vim /etc/netplan/00-installer-config.yaml
+```
+
+vm1: 192.168.40.129
+
+```yaml
+# 32网卡是vmnet1, 35是nat vmnet8
+network:
+  ethernets:
+    ens32:
+      addresses: [192.168.40.129/24]
+      dhcp4: false
+      gateway4: 192.168.40.1
+      nameservers:
+         addresses: [192.168.40.1]  
+    ens35:
+      addresses: [192.168.80.135/24]
+      dhcp4: false
+      gateway4: 192.168.80.2
+      nameservers:
+         addresses: [192.168.80.2]
+  version: 2
+```
+
+
+
+vm2: 192.168.40.130
+
+```yaml
+# 32网卡是vmnet1, 35是nat vmnet8
+network:
+  ethernets:
+    ens32:
+      addresses: [192.168.40.130/24]
+      dhcp4: false
+      gateway4: 192.168.40.1
+      nameservers:
+         addresses: [192.168.40.1]  
+    ens35:
+      addresses: [192.168.80.136/24]
+      dhcp4: false
+      gateway4: 192.168.80.2
+      nameservers:
+         addresses: [192.168.80.2]
+  version: 2
+```
+
+
+
+修改完毕，保存并退出，执行下面的指令使配置生效
+
+```bash
+netplan apply
+```
+
