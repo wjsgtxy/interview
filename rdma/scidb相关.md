@@ -135,15 +135,20 @@ pg_dump说明：http://postgres.cn/docs/9.6/app-pgdump.html
 ```bash
 # 配置文件位置，这个文件配置客户端校验 PostgreSQL Client Authentication Configuration File
 /etc/postgresql/9.3/main/pg_hba.conf
+/etc/postgresql/10/main/pg_hba.conf
 #-------------配置--------------
 # 前面两个host的是已经存在的，后面一个需要自己根据CIDR配置
 host all all 127.0.0.1/32 md5
 host all all ::1/128 md5
 host all all W.X.Y.Z/N md5
+
+# 有集群后添加
+host    all             all             192.168.40.0/24         md5
 #------------------------------
 
 # 在运行的系统上修改这个文件之后，需要操作才能生效
 pg_ctl reload
+# pg_ctl这个命令提示找不到
 
 # 总的配置文件
 /etc/postgresql/9.3/main/postgresql.conf
@@ -579,6 +584,7 @@ mkdir /opt/scidb/19.11/DB-scidb
 #chown -R scidb /opt/scidb/19.11/DB-scidb 只变了用户，文件夹的组还是root
 #chown -R scidb:scidb /opt/scidb/19.11/DB-scidb
 chown -R scidb:scidb /opt/scidb
+chown -R scidb:scidb /home/scidb
 
 mkdir -p /opt/scidb/19.11/DB-scidb/0/0
 mkdir -p /opt/scidb/19.11/DB-scidb/0/1
@@ -598,8 +604,8 @@ vi /root/.pgpass
 # 其实格式为：hostname:port:database:username:password 只不过scidb帮我们创建了scidb_cluster的数据库了
 # 本地单server如下：
 #127.0.0.1:5432:scidb_cluster:scidb:Y2FhZTBiNjU5NDk5NzFkNzg5ZjNhZDNh
-127.0.0.1:5432:scidb_cluster:scidb:123456
-192.168.40.129:5432:scidb_cluster:scidb:123456
+# 127.0.0.1:5432:scidb_cluster:scidb:123456
+192.168.40.129:5432:scidb_cluster:scidb:123456 # 变成集群之后用这个
 
 # 设置权限!!! 注意，不能设置为777！！！
 chmod 0600 ~/.pgpass
@@ -664,13 +670,22 @@ sudo -u postgres /opt/scidb/19.11/bin/scidbctl.py init-syscat scidb_cluster
 # 但是数据库中没有找到表，感觉创建失败了
 
 # 初始化数据库， pgpass文件ok，这个就成功了，之前一直不成功，成功之后，数据库中的表就创建了！
+# 创建集群之后，执行这个命令需要 pg_hba文件中可以远程访问，因为config.ini中server设置的不再是本地ip了，pg默认只能local访问
 /opt/scidb/19.11/bin/scidbctl.py --config /opt/scidb/19.11/etc/config.ini init-cluster scidb_cluster
 ```
+
+创建集群后，重新执行这个初始化数据库的操作，报错了，root中已经有pgpass文件了，而且也改成了 192.168.40.129:xxx的形势了。
+
+![image-20220708104657144](scidb相关.assets/image-20220708104657144.png)
+
+解决： 将这个文件复制到 /home/scidb里面，重新执行就ok了。
+
+注意：集群修改了server数量之后，要执行这个文件才行，要不然会提示没有找到systemcatlog啥的。这个重新执行后，集群就可以起来了。
 
 
 
 ```bash
-# 查看状态，比docker里面的多了好多，docker里面只有2个
+# 查看状态，比docker里面的多了好多，docker里面只有2个，同时我发现集群worker的scidb可以被master关闭
 /opt/scidb/19.11/bin/scidbctl.py status
 ---------------------------------------------
 PID     PPID    CMD             SERVER
@@ -786,9 +801,25 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub <SCIDB_USER>@0.0.0.0
 ssh-copy-id -i ~/.ssh/id_rsa.pub <SCIDB_USER>@127.0.0.1
 
 # 这个也是使用ssh登录，需要输入对端的密码
+# 129 master
 ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.40.130
+ssh-copy-id -i ~/.ssh/id_rsa.pub scidb@127.0.0.1 
+# 没有成功，密码是对的，123456，提示没有权限创建.ssh文件夹，手动创建后提示没有权限创建auth_key什么的，后面发现应该是因为我 /home/scidb这个目录之前放了 scidb源代码，属主是 xy用户，不属于scidb用户，重新赋予这个目录给scidb，然后先切换到scidb用户，ssh-keygen生成scidb用户自己的ssh目录和秘钥，再做上面的操作，就ok了。
+chown scidb:scidb /home/scidb
+su scidb
+ssh-keygen
+
+# 130 worker
 ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.40.129
+ssh-copy-id -i ~/.ssh/id_rsa.pub scidb@127.0.0.1
 
 # 现在就可以使用ssh免密登录了
 ssh 192.168.40.130
+
+# 免密之后直接传输文件，集群环境下，一台机器编译之后直接将编译的结果传输到worker节点
+scp /opt/scidb/19.11/lib/libscidbclient.so 192.168.40.130:/opt/scidb/19.11/lib/libscidbclient.so
+scp /opt/scidb/19.11/lib/scidb/plugins/mpi_slave_scidb 192.168.40.130:/opt/scidb/19.11/lib/scidb/plugins/mpi_slave_scidb
+scp /opt/scidb/19.11/lib/scidb/plugins/libmisc.so 192.168.40.130:/opt/scidb/19.11/lib/scidb/plugins/libmisc.so
+scp /opt/scidb/19.11/bin/iquery 192.168.40.130:/opt/scidb/19.11/bin/iquery
+scp /opt/scidb/19.11/bin/scidb 192.168.40.130:/opt/scidb/19.11/bin/scidb
 ```

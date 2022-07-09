@@ -928,3 +928,99 @@ gcc/g++在执行编译工作的时候，总共需要4步：
 　　此选项以stabs格式声称调试信息，并且包含仅供gdb使用的额外调试信息. 
 -ggdb 
 　　此选项将尽可能的生成gdb的可以使用的调试信息。
+
+
+
+
+
+### 动态库加载链接
+
+https://blog.csdn.net/qq_33726635/article/details/111440595
+
+TODO 整理一下
+
+1. 静态链接：
+   静态库在编译链接期间被打包copy到了可执行文件中，也就是说静态库其实是在编译期间(Compile time)链接使用的。
+
+2. 动态链接：
+
+   1. load-time dynamic linking(加载时动态链接)
+
+      - 阶段一：链接时，将动态库信息写入可执行文件；
+        在编译链接生成可执行文件阶段时需要告诉编译器所依赖的动态库信息。
+
+      - 阶段二：加载时，可执行文件依据动态库信息进行动态链接。
+        ==当可执行文件加载（可执行文件复制到内存）完成后，在程序开始运行之前，操作系统就会查找可执行文件依赖的动态库信息，即依据第一阶段给的链接信息进行动态库的查找以及符号决议。== 找到该动态库后就将该动态库从磁盘搬到内存，如果这个过程没有问题，那么程序开始运行。（dz: 应该是放到映射区了）
+
+   2. run-time dynamic linking(运行时动态链接)
+      运行时动态链接不需要在编译链接时提供动态库信息，也就是说，在可执行文件被启动运行之前，可执行文件对所依赖的动态库信息一无所知，只有当程序运行到需要调用动态库所提供的代码时才会启动动态链接过程。
+
+
+
+在动态链接下，可执行文件当中会新增两段，即dynamic段以及GOT（Global offset table）段，这两段内容就是是我们之前所说的动态库信息。 dynamic段中保存了可执行文件依赖哪些动态库，动态链接符号表的位置以及重定位表的位置等信息。
+参考资料：彻底理解链接器：三，库与可执行文件
+
+3、数据段与代码段的内容：
+
+代码段：指的是计算机可以执行的机器指令，也就是源文件中定义的所有函数。
+数据段：源文件中定义的全局变量。
+特例：局部变量是函数私有的，所以函数私有的局部变量被放在了代码段中，作为机器指令的操作数。
+4、什么时候需要重新链接：
+如果我们修改了动态库的代码，我们只需要重新编译动态库就可以了而无需重新新编译我们自己的程序，因为可执行文件当中仅仅保留了动态库的必要信息，重新编译动态库后这些必要都信息是不会改变的（只要不修改动态库的名字和动态库导出的供可执行文件使用的函数）， 编译好新的动态库后只需要简单的替换原有动态库，下一次运行程序时就可以使用新的动态库了。
+
+
+
+2022年7月8日14:18:59
+
+##### 尝试将scidb的network_lib 从静态库变成动态库：
+
+只修改network_lib，报错：
+
+> At least one of these targets is not a STATIC_LIBRARY.  Cyclic dependencies are allowed only among static libraries. ==（dz:说只有静态库允许循环依赖）==
+
+出现了循环依赖，network_lib依赖 rac_lib, rac_lib又依赖network_lib
+
+另外，百度了一下，发现release版本编译会比debug更消耗时间，算了，还是改回来吧，暂时解决不了这个循环依赖的问题。
+
+
+
+#### swap空间不足导致编译失败的问题
+
+编译scidb，链接的时候，报了这么一个错误：百度了解到是swap空间不足导致的，需要扩大交换分区
+
+> collect2: fatal error: ld terminated with signal 9 [Killed]
+
+```bash
+# 查看之前的交换分区大小
+root@xy-virtual-machine:/scidb/build# free -m
+              total        used        free      shared  buff/cache   available
+Mem:           1969         482        1301           1         185        1323
+Swap:          2047         673        1374
+# 查看swap文件，这个文件就在根目录
+root@xy-virtual-machine:/scidb/build# sudo swapon -s
+Filename                                Type            Size    Used    Priority
+/swapfile                               file            2097148 688884  -2
+```
+
+```bash
+# 创建swap文件并更改权限，这样用户无法直接读取
+cd /mnt
+dd if=/dev/zero of=3072MB.swap bs=1024 count=3145728
+chmod 600 /mnt/3072MB.swap
+# 格式化成swap device
+mkswap /mnt/3072MB.swap
+# 添加到系统
+swapon /mnt/3072MB.swap
+
+# 查看
+-------------------------------------
+root@xy-virtual-machine:/mnt# swapon
+NAME             TYPE SIZE   USED PRIO
+/swapfile        file   2G 671.2M   -2
+/mnt/3072MB.swap file   3G     0B   -3
+
+# 永久生效，添加到最后一行，下次重启后自动生效
+vim /etc/fstab
+/mnt/3072MB.swap swap swap sw 0 0
+```
+

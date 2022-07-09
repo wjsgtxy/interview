@@ -75,6 +75,7 @@ rxe_cfg add ens32
 ```bash
 # 192.168.40.129 
 ib_send_bw -d rxe0
+ib_send_bw -d rxe0 192.168.40.129 # 同一台机器可以吗？这里也是可以的，而且速度更快，有700MB/s, 两台虚拟机之间才50MB/s
 # 192.168.40.130
 ib_send_bw -d rxe0 192.168.40.129
 ```
@@ -92,6 +93,7 @@ apt install rdmacm-utils
 ```bash
 # server 129机器
 rdma_server -p 1993
+rdma_client -s 192.168.40.129 -p 1993 # 同一台机器可以吗？是可以的
 # client 130机器
 rdma_client -s 192.168.40.129 -p 1993
 ```

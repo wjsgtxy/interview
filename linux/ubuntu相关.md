@@ -235,3 +235,14 @@ sudo service --status-all # 确实在输出里面看到了 [ + ]  softroce_init.
 ```bash
 [root@Ubuntu /etc/init.d/]# sudo update-rc.d -f softroce_init.sh remove         # 移除脚本，XXX为你的脚本文件名
 ```
+
+
+
+
+
+#### 查看命令在哪里
+
+```
+locate pg_ctl
+```
+
