@@ -88,7 +88,8 @@ void testComp(){
     // 传入函数指针
     // decltype()用于获取函数指针类型，test是函数首地址，类型是void() &test是一个指针，类型是void(*)() 因此两者所代表的地址值是一样的，但是类型不一样
     // priority_queue<vector<int>, vector<vector<int>>, decltype(cmp3)> pq4(cmp3); // 编译失败
-    priority_queue<vector<int>, vector<vector<int>>, decltype(&cmp3)> pq4(&cmp3); // OK，最后这里传入cmp3或者&cmp3都可以！但是不能不传
+    // priority_queue<vector<int>, vector<vector<int>>, decltype(&cmp3)> pq4(&cmp3); // OK，最后这里传入cmp3或者&cmp3都可以！但是不能不传
+    priority_queue<vector<int>, vector<vector<int>>, decltype(cmp3)*> pq4(cmp3); // 这样也是ok的，decltype后面添加一个*表示是一个指针
 
 
     // lambda表达式: 也属于传入函数指针

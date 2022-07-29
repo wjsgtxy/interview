@@ -359,8 +359,6 @@ scp ./client root@192.168.56.102:/root
 ./client -a 192.168.56.102
 ./client -a 192.168.56.102 -p 12001 -c 2000 -t -x
 ./client -a 192.168.56.102 -t -x
-
-
 ```
 
 
@@ -461,31 +459,101 @@ client: our_destroy_control_struct destroyed our_control 0x5555892c4880
 
 
 
+### ping-sr-3调试
+
+2022年7月28日 11:36:37
+
+1. 屏蔽c_d_queue_pair.c 中 xrc_domain这个参数
+
+```
+c_d_queue_pair.c:43:11: error: ‘struct ibv_qp_init_attr’ has no member named ‘xrc_domain’
+  init_attr->xrc_domain = NULL;
+```
+
+2. makefile文件更改，屏蔽sources
+
+   ```makefile
+   #SOURCES = $(shell ls *.{c,h}) # 会报错，no such file
+   ```
+
+3. 手动连接，直接make链接有问题
+
+   ```makefile
+   # 默认的make之后输出的gcc命令，有问题
+   gcc -lrt -lrdmacm  client.o utilities.o process_options.o c_d_control_struct.o c_d_id.o bind_client.o c_d_queue_pair.o c_d_connect.o c_d_buffers.o send_recv.o process_cm_events.o process_completions.o   -o client
+   
+   # 修改之后的 链接client命令
+   gcc client.o utilities.o process_options.o c_d_control_struct.o c_d_id.o bind_client.o c_d_queue_pair.o c_d_connect.o c_d_buffers.o send_recv.o process_cm_events.o process_completions.o -lrt -lrdmacm -libverbs -lpthread -o client
+   
+   # 先make server才有server.o文件
+   make server
+   # 链接server 放到了后面，同时添加了 -libverbs -lpthread
+   gcc server.o utilities.o process_options.o c_d_control_struct.o c_d_id.o bind_listener.o c_d_connect.o c_d_queue_pair.o c_d_buffers.o send_recv.o agent.o process_cm_events.o process_completions.o -lrt -lrdmacm -libverbs -lpthread    -o server
+   ```
+
+   
+
+4. 问题：
+
+   > /usr/bin/ld: process_cm_events.o: undefined reference to symbol 'sem_post@@GLIBC_2.2.5'
+   > //lib/x86_64-linux-gnu/libpthread.so.0: error adding symbols: DSO missing from command line
+   >
+   > 解决：添加 -lpthread
+
+>  c_d_id.o: In function `ntohll`:
+> /usr/include/infiniband/arch.h:44: undefined reference to `be64toh'	
+>
+> 解决：见 我的笔记 gcc编译中 feature_test_macros 那一小节，添加#define _DEFAULT_SOURCE就OK了
+>
+> 文件：c_d_id.c / c_d_connect.c 
+
+
+
+##### 运行：
+
+```bash
+# 192.168.40.129
+./client -a 192.168.40.130
+# 192.168.40.130
+./server -a 192.168.40.130
+```
+
+#### gdbserver调试
+
+```bash
+# -c 迭代次数
+gdbserver :1234 ./server -a 192.168.40.130 -c 10
+
+./client -a 192.168.40.130 -c 10
+```
+
+
+
 
 
 2022年3月25日11:28:13
 
-usr/lib/x86_64_linux_gun 下面有
+> usr/lib/x86_64_linux_gun 下面有
+>
+> libibverbs.so.1.8.28.0
+>
+> librdmacm.so.1.2.28.0
+>
+> 没有libmx5.so
+>
+> 
+>
+> rdma-core-master 目录下面build/lib 里面：
+>
+> libibverbs.so.1.14.39.0
+>
+> librdmacm.so.1.3.39.0
+>
+> libmx5.so.1.22.39.0
 
-libibverbs.so.1.8.28.0
-
-librdmacm.so.1.2.28.0
-
-没有libmx5.so
 
 
-
-rdma-core-master 目录下面build/lib 里面：
-
-libibverbs.so.1.14.39.0
-
-librdmacm.so.1.3.39.0
-
-libmx5.so.1.22.39.0
-
-
-
-自己编译rdmacore-master里面example的 rc-pingpong.c
+###### 自己编译rdmacore-master里面example的 rc-pingpong.c
 
 ```bash
 # 链接的时候失败了,报了很多 undefined reference
@@ -589,15 +657,13 @@ rdma_client -s 192.168.56.101 -p 1993
 
 
 
-clion远程调试(https://blog.csdn.net/lihao21/article/details/87425187)
+### [Clion远程调试](https://blog.csdn.net/lihao21/article/details/87425187)
 
 安装gdbserver:
 
 ```
 apt install gdbserver
 ```
-
-
 
 clion Tools->deployment添加远程路径（127.0.0.1:3333）
 
@@ -614,9 +680,7 @@ clion中Run->configuration 添加一个Remote Debug, path mapping也添加上本
 target remote args 为 tcp:127.0.0.1:1234
 ```
 
-注意，需要在virtual box 中 配置 102虚拟机nat 网卡的端口映射 1234:1234，就像之前映射3333端口让moba访问一样
-
-
+注意，需要在virtual box 中 配置 102虚拟机nat 网卡的端口映射 1234:1234，就像之前映射3333端口让moba访问一样（这个是在本地访问虚拟机中的gdb，所以做了端口转发，如果我在其他地址，比如我vmware虚拟机中的192.168.40.130的可以直接访问的地址，就不需要这种转发了，可以直接访问的）
 
 ```bash
 # 查看rdma link帮助文档，写的很详细q
@@ -704,7 +768,7 @@ GID[  1]:               0000:0000:0000:0000:0000:ffff:c0a8:3865
 
 gdb调试rdma_client 
 
-```
+```bash
 scp ./rdma_client root@192.168.56.101:/home/rdma/rdma_examples
 scp ./rdma_server root@192.168.56.101:/home/rdma/rdma_examples
 
@@ -717,12 +781,11 @@ scp ./rdma_server root@192.168.56.101:/home/rdma/rdma_examples
 gdbserver :1234 ./rdma_client -s 192.168.56.101
 
 gdbserver :1234 ./rdma_server
-
 ```
 
 gdb调试rdma_server
 
-```
+```bash
 # 101 client
 /home/rdma/rdma_examples/rdma_client -s 192.168.56.102
 
@@ -736,7 +799,7 @@ gdbserver :1234 ./rdma_server
 
 调试rping
 
-```
+```bash
 scp ./rping root@192.168.56.101:/home/rdma/rdma_examples
 
 # 101
@@ -768,12 +831,9 @@ RDMA_CM_EVENT_DISCONNECTED
 
 
 
-
-
 ```
-# gcc 那个TODO 这样就可以了，也不用指定-L,但是lrt和rdmacm要放在后面才行，而且要加上ibverbs
+# gcc这样就可以了，也不用指定-L,但是lrt和rdmacm要放在后面才行，而且要加上ibverbs
 gcc client.o utilities.o -lrt -lrdmacm -libverbs  -o client
-
 ```
 
 

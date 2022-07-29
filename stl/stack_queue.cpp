@@ -87,8 +87,8 @@ void testComp(){
     // 传入函数指针
     // decltype()用于获取函数指针类型，test是函数首地址，类型是void() &test是一个指针，类型是void(*)() 因此两者所代表的地址值是一样的，但是类型不一样
     // priority_queue<vector<int>, vector<vector<int>>, decltype(cmp3)> pq4(cmp3); // 编译失败
-    priority_queue<vector<int>, vector<vector<int>>, decltype(&cmp3)> pq4(&cmp3); // OK，最后这里传入cmp3或者&cmp3都可以！但是不能不传
-
+    // priority_queue<vector<int>, vector<vector<int>>, decltype(&cmp3)> pq4(&cmp3); // OK，最后这里传入cmp3或者&cmp3都可以！但是不能不传
+    priority_queue<vector<int>, vector<vector<int>>, decltype(cmp3)*> pq4(cmp3); // 这样也是ok的，decltype后面添加一个*表示是一个指针
 
     // lambda表达式: 也属于传入函数指针
     auto cmp4 = [](vector<int>& a, vector<int>& b){ // 注意 cmp4类型写auto才编译成功，写bool不成功
@@ -163,10 +163,10 @@ int main(){
 
     // 优先队列，好像底层可以用vector实现 empty,size,top,push,emplace,pop
     // 头文件queue就可以了，也包含优先队列
-    // testPriority_queue();
+    testPriority_queue();
 
     // 自定义比较函数
-    // testComp();
+    testComp();
 
     // 双端队列 deque(发音deck)
     testDeque();
