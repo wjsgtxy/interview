@@ -513,9 +513,9 @@ c_d_queue_pair.c:43:11: error: ‘struct ibv_qp_init_attr’ has no member named
 
 ```bash
 # 192.168.40.129
-./client -a 192.168.40.130
+./client -a 192.168.40.130 -c 100000
 # 192.168.40.130
-./server -a 192.168.40.130
+./server -a 192.168.40.130 -c 100000
 ```
 
 #### gdbserver调试
